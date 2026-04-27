@@ -172,38 +172,18 @@ export default function Dashboard() {
     e.preventDefault();
     if (!uid || !user) return;
     
-    // Quota validation
-    const typeKey = leaveType.toLowerCase() as keyof typeof user.leaveQuotas;
-    let remaining = ((user.leaveQuotas as any)?.[typeKey] || 0) - ((user.usedLeaves as any)?.[typeKey] || 0);
+    // Consolidated Quota validation (14 days total)
+    const totalQuota = user.leaveQuotas?.annual || 14;
+    const totalUsed = Object.values(user.usedLeaves || {}).reduce((a: number, b: any) => a + (Number(b) || 0), 0);
+    let remaining = totalQuota - totalUsed;
     
-    if (leaveType === 'Short') {
-      const currentMonth = new Date().getMonth() + 1;
-      const currentYear = new Date().getFullYear();
-      const monthShortLeaves = requests.filter(l => {
-        if (l.leaveType !== 'Short') return false;
-        const lDate = new Date(l.startDate);
-        return (lDate.getMonth() + 1 === currentMonth) && 
-               (lDate.getFullYear() === currentYear) &&
-               (l.status !== 'Rejected');
-      });
-      
-      const quotaPerMonth = 8;
-      const usedThisMonth = monthShortLeaves.length;
-      
-      if (usedThisMonth >= quotaPerMonth) {
-        toast.error(`Insufficient Short leave balance. Monthly limit (8) reached.`);
-        return;
-      }
-    } else {
-      const start = new Date(startDate);
-      const end = new Date(endDate);
-      const diffTime = Math.abs(end.getTime() - start.getTime());
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    const diffDays = leaveType === 'Short' ? 1 : Math.ceil(Math.abs(end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
 
-      if (diffDays > remaining) {
-        toast.error(`Insufficient ${leaveType} leave balance. Remaining: ${remaining} days.`);
-        return;
-      }
+    if (diffDays > remaining) {
+      toast.error(`Insufficient leave balance. Remaining: ${remaining} days.`);
+      return;
     }
 
     setSubmitting(true);
@@ -404,14 +384,16 @@ export default function Dashboard() {
                   </div>
                   <div className="bg-white/5 backdrop-blur-md p-4 rounded-2xl border border-white/10">
                     <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-1">Remaining Leaves</p>
-                    <p className="text-2xl font-black text-blue-400">{user?.leaveQuotas.annual - user?.usedLeaves.annual} d</p>
+                    <p className="text-2xl font-black text-blue-400">
+                      {(user?.leaveQuotas?.annual || 14) - Object.values(user?.usedLeaves || {}).reduce((a: number, b: any) => a + (Number(b) || 0), 0)} d
+                    </p>
                   </div>
                   </>
                 )}
               </div>
 
               <div className="flex flex-wrap gap-4">
-                {!isAdmin ? (
+                {(user?.role === 'employee' || user?.role === 'hr') ? (
                   <>
                     {!(attendance.find(r => r.date === getLocalToday())) ? (
                       <button 
@@ -471,32 +453,40 @@ export default function Dashboard() {
                   {isAdmin ? 'Company Resources' : 'My Leave Status'}
                 </h3>
               </div>
-              <div className="h-48">
+              <div className="h-48 relative">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
                       data={user ? [
-                        { name: 'Annual', value: user.leaveQuotas.annual - user.usedLeaves.annual, color: '#f97316' },
-                        { name: 'Sick', value: user.leaveQuotas.sick - user.usedLeaves.sick, color: '#ef4444' },
-                        { name: 'Casual', value: user.leaveQuotas.casual - user.usedLeaves.casual, color: '#3b82f6' },
-                        { name: 'Used', value: Object.values(user.usedLeaves || {}).reduce((a: number, b: number) => a + b, 0), color: '#f4f4f5' },
+                        { name: 'Remaining', value: Math.max(0, (user.leaveQuotas.annual || 14) - Object.values(user.usedLeaves || {}).reduce((a: number, b: any) => a + (Number(b) || 0), 0)), color: '#f97316' },
+                        { name: 'Used', value: Object.values(user.usedLeaves || {}).reduce((a: number, b: any) => a + (Number(b) || 0), 0), color: '#f4f4f5' },
                       ] : []}
                       innerRadius={60}
                       outerRadius={80}
                       paddingAngle={5}
                       dataKey="value"
+                      stroke="none"
                     >
-                      {[
+                      {user && [
                         { color: '#f97316' },
-                        { color: '#ef4444' },
-                        { color: '#3b82f6' },
                         { color: '#f4f4f5' }
                       ].map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={entry.color} />
                       ))}
                     </Pie>
-                    <Tooltip />
+                    <Tooltip 
+                      contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}
+                      itemStyle={{ fontWeight: 'bold', fontSize: '12px' }}
+                    />
                   </PieChart>
+                  {/* Central Balance Label */}
+                  <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                    <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Balance</p>
+                    <p className="text-2xl font-black text-zinc-900">
+                      {Math.max(0, (user?.leaveQuotas.annual || 14) - Object.values(user?.usedLeaves || {}).reduce((a: number, b: any) => a + (Number(b) || 0), 0))}
+                    </p>
+                    <p className="text-[10px] font-bold text-zinc-400">Days</p>
+                  </div>
                 </ResponsiveContainer>
               </div>
             </div>
