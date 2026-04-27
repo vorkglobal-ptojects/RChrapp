@@ -345,12 +345,44 @@ export async function saveLeave(req: Omit<LeaveRequest, 'id'>): Promise<string> 
 export async function updateLeave(
   id: string, status: 'Approved' | 'Rejected', approvedBy: string
 ): Promise<void> {
+  // 1. Get the request details first to know who it belongs to and how many days
+  const { data: req, error: fetchError } = await supabase
+    .from('leave_requests')
+    .select('*')
+    .eq('id', id)
+    .single();
+  
+  if (fetchError) throw fetchError;
+
+  // 2. Update the status
   const { error } = await supabase.from('leave_requests').update({ 
     status, 
     approved_by: approvedBy,
     updated_at: new Date().toISOString()
   }).eq('id', id);
   if (error) throw error;
+
+  // 3. If approved, update the user's used leaves balance
+  if (status === 'Approved') {
+    const start = new Date(req.start_date);
+    const end = new Date(req.end_date);
+    const diffDays = req.leave_type === 'Short' ? 1 : Math.ceil(Math.abs(end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+    
+    // Get current profile to update JSONB
+    const { data: profile, error: pError } = await supabase
+      .from('profiles')
+      .select('used_leaves')
+      .eq('id', req.user_id)
+      .single();
+      
+    if (!pError && profile) {
+      const used = profile.used_leaves || { annual: 0, sick: 0, casual: 0, short: 0 };
+      const typeKey = req.leave_type.toLowerCase();
+      used[typeKey] = (used[typeKey] || 0) + diffDays;
+      
+      await supabase.from('profiles').update({ used_leaves: used }).eq('id', req.user_id);
+    }
+  }
 }
 
 export async function deleteLeave(id: string): Promise<void> {

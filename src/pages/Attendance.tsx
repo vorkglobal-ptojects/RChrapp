@@ -120,7 +120,7 @@ export default function Attendance() {
           </div>
         </div>
         <div className="flex flex-col md:flex-row md:items-center gap-4">
-          {user?.role === 'employee' && (
+          {(user?.role === 'employee' || user?.role === 'hr') && (
             <div className="flex gap-2">
               <button 
                 onClick={async () => {

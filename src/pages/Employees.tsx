@@ -386,7 +386,7 @@ export default function Employees() {
                       travelling,
                       net: salaryA + salaryB + intensive + travelling - epf - advances - cover,
                       performanceScore: editingEmp?.performanceScore || 0,
-                      leaveQuotas: editingEmp?.leaveQuotas || { annual: 20, sick: 10, casual: 7, short: 2 },
+                      leaveQuotas: editingEmp?.leaveQuotas || { annual: 14, sick: 0, casual: 0, short: 0 },
                       usedLeaves: editingEmp?.usedLeaves || { annual: 0, sick: 0, casual: 0, short: 0 },
                     };
 

@@ -53,39 +53,18 @@ export default function Leaves() {
     e.preventDefault();
     if (!user) return;
     
-    // Quota validation
-    const typeKey = leaveType.toLowerCase() as keyof typeof user.leaveQuotas;
-    let remaining = ((user.leaveQuotas as any)?.[typeKey] || 0) - ((user.usedLeaves as any)?.[typeKey] || 0);
+    // Consolidated Quota validation (14 days total)
+    const totalQuota = user.leaveQuotas?.annual || 14;
+    const totalUsed = Object.values(user.usedLeaves || {}).reduce((a: number, b: any) => a + (Number(b) || 0), 0);
+    let remaining = totalQuota - totalUsed;
     
-    if (leaveType === 'Short') {
-      // For short leave, quota is 8 per month. 
-      // We check how many 'Short' leaves are approved/pending in the current month.
-      const currentMonth = new Date().getMonth() + 1;
-      const currentYear = new Date().getFullYear();
-      const monthShortLeaves = leaves.filter(l => {
-        if (l.leaveType !== 'Short') return false;
-        const lDate = new Date(l.startDate);
-        return (lDate.getMonth() + 1 === currentMonth) && 
-               (lDate.getFullYear() === currentYear) &&
-               (l.status !== 'Rejected');
-      });
-      
-      const quotaPerMonth = 8;
-      const usedThisMonth = monthShortLeaves.length;
-      
-      if (usedThisMonth >= quotaPerMonth && !editingLeaveId) {
-        toast.error(`Insufficient Short leave balance. Monthly limit (8) reached.`);
-        return;
-      }
-    } else {
-      const start = new Date(startDate);
-      const end = new Date(endDate);
-      const diffDays = Math.ceil(Math.abs(end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    const diffDays = leaveType === 'Short' ? 1 : Math.ceil(Math.abs(end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
 
-      if (diffDays > remaining && !editingLeaveId) {
-        toast.error(`Insufficient ${leaveType} leave balance.`);
-        return;
-      }
+    if (diffDays > remaining && !editingLeaveId) {
+      toast.error(`Insufficient leave balance. Remaining: ${remaining} days.`);
+      return;
     }
 
     setSubmitting(true);
@@ -195,7 +174,7 @@ export default function Leaves() {
           <h1 className="text-3xl font-black text-zinc-900">Leave Management</h1>
           <p className="text-zinc-500 font-medium tracking-tight">Track, apply, and approve time-off requests</p>
         </div>
-        {user?.role === 'employee' && (
+        {(user?.role === 'employee' || user?.role === 'hr') && (
           <button 
             onClick={() => setIsModalOpen(true)}
             className="bg-orange-500 text-white px-8 py-4 rounded-2xl font-black flex items-center gap-2 hover:bg-orange-600 transition-all shadow-xl shadow-orange-100"
@@ -206,23 +185,23 @@ export default function Leaves() {
         )}
       </div>
 
-      {/* 📊 My Balance Summary (Strategic for Employees) */}
-      {user?.role === 'employee' && (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {[
-            { label: 'Annual', val: (user.leaveQuotas?.annual || 0) - (user.usedLeaves?.annual || 0), color: 'text-orange-600', bg: 'bg-orange-50' },
-            { label: 'Sick', val: (user.leaveQuotas?.sick || 0) - (user.usedLeaves?.sick || 0), color: 'text-red-600', bg: 'bg-red-50' },
-            { label: 'Casual', val: (user.leaveQuotas?.casual || 0) - (user.usedLeaves?.casual || 0), color: 'text-blue-600', bg: 'bg-blue-50' },
-            { label: 'Short', val: (user.leaveQuotas?.short || 0) - (user.usedLeaves?.short || 0), color: 'text-green-600', bg: 'bg-green-50' },
-          ].map(q => (
-            <div key={q.label} className="bg-white p-6 rounded-3xl border border-zinc-100 shadow-sm">
-              <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-1">{q.label} Balance</p>
-              <p className={cn("text-2xl font-black", q.color)}>
-                {q.val} {q.label === 'Short' ? 'Leaves' : 'Days'}
-                {q.label === 'Short' && <span className="text-[10px] block opacity-60">per Month</span>}
-              </p>
-            </div>
-          ))}
+      {/* 📊 My Balance Summary (Strategic for Employees & HR) */}
+      {(user?.role === 'employee' || user?.role === 'hr') && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="bg-white p-6 rounded-3xl border border-zinc-100 shadow-sm">
+            <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-1">Total Leave Balance</p>
+            <p className="text-2xl font-black text-orange-600">
+              {(user.leaveQuotas?.annual || 14) - Object.values(user.usedLeaves || {}).reduce((a: number, b: any) => a + (Number(b) || 0), 0)} Days
+              <span className="text-[10px] block opacity-60">Out of {user.leaveQuotas?.annual || 14} total annual days</span>
+            </p>
+          </div>
+          <div className="bg-white p-6 rounded-3xl border border-zinc-100 shadow-sm">
+            <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-1">Leaves Taken</p>
+            <p className="text-2xl font-black text-zinc-900">
+              {Object.values(user.usedLeaves || {}).reduce((a: number, b: any) => a + (Number(b) || 0), 0)} Days
+              <span className="text-[10px] block opacity-60">Across all types (Annual, Sick, Casual, Short)</span>
+            </p>
+          </div>
         </div>
       )}
 
