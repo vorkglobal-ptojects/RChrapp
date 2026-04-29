@@ -289,7 +289,11 @@ export async function getLeaves(uid?: string): Promise<LeaveRequest[]> {
     .from('leave_requests')
     .select(`
       *,
-      profiles:user_id (
+      requester:user_id (
+        name,
+        role
+      ),
+      approver:approved_by (
         name,
         role
       )
@@ -303,12 +307,13 @@ export async function getLeaves(uid?: string): Promise<LeaveRequest[]> {
   if (error) throw error;
   
   return (data || []).map(d => {
-    const profile = d.profiles as any;
+    const requester = d.requester as any;
+    const approver = d.approver as any;
     return {
       id: d.id.toString(),
       userId: d.user_id,
-      userName: profile?.name || 'Unknown',
-      userRole: profile?.role || 'employee',
+      userName: requester?.name || 'Unknown',
+      userRole: requester?.role || 'employee',
       leaveType: d.leave_type,
       startDate: d.start_date,
       endDate: d.end_date,
@@ -316,7 +321,7 @@ export async function getLeaves(uid?: string): Promise<LeaveRequest[]> {
       endTime: d.end_time,
       reason: d.reason,
       status: d.status,
-      approvedBy: d.approved_by,
+      approvedBy: approver ? `${approver.name} (${approver.role.toUpperCase()})` : d.approved_by,
       createdAt: d.created_at,
       isUrgent: d.is_urgent,
       imageUrl: d.image_url

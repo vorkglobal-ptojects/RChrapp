@@ -71,6 +71,15 @@ export default function Leaves() {
       diffDays = Math.ceil(Math.abs(end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
     }
 
+    const today = new Date();
+    const maxDate = new Date();
+    maxDate.setMonth(maxDate.getMonth() + 2);
+
+    if (start > maxDate) {
+      toast.error(`You can only apply for leaves up to 2 months in advance (Before ${maxDate.toLocaleDateString()}).`);
+      return;
+    }
+
     if (diffDays > remaining && !editingLeaveId) {
       toast.error(`Insufficient leave balance. Remaining: ${remaining} days.`);
       return;
