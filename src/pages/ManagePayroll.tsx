@@ -234,7 +234,7 @@ export default function ManagePayroll() {
                 </>
               ) : (
                 <>
-                  {(user?.role === 'super' || user?.role === 'owner' || (user?.role === 'hr' && p.userId !== user.uid)) ? (
+                  {(user?.role === 'super' || user?.role === 'owner') ? (
                     <>
                       {p.status === 'Paid' || justPaidIds.has(p.id!) ? (
                         <button 

@@ -551,8 +551,8 @@ export async function generatePayroll(month: number, year: number): Promise<void
   if (pError) throw pError;
 
   for (const emp of employees) {
-    // Skip payroll generation for management roles
-    if (['super', 'owner', 'hr'].includes(emp.role)) continue;
+    // Skip payroll generation for super and owner, but include HR
+    if (['super', 'owner'].includes(emp.role)) continue;
     
     const exists = existing?.find(p => p.user_id === emp.uid);
     if (!exists) {
