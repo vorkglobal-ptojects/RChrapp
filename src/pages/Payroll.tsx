@@ -229,7 +229,7 @@ export default function Payroll() {
     const matchesSearch = (p.userName || '').toLowerCase().includes(search.toLowerCase());
     const matchesMonth = p.month === Number(filterMonth) + 1; // months are 1-12 in DB
     return matchesSearch && matchesMonth;
-  }).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  });
 
   const totalPayout = filteredPayrolls.reduce((acc, p) => acc + p.netSalary, 0);
 

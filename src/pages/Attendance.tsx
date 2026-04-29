@@ -49,7 +49,23 @@ export default function Attendance() {
     const matchesSearch = emp ? emp.name.toLowerCase().includes(search.toLowerCase()) : true;
     const matchesBranch = filterBranch === 'All' || (emp ? emp.branch === filterBranch : true);
     return matchesSearch && matchesBranch;
-  }).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  }).sort((a, b) => {
+    const dateDiff = new Date(b.date).getTime() - new Date(a.date).getTime();
+    if (dateDiff !== 0) return dateDiff;
+    
+    const empA = employees.find(e => e.uid === a.userId);
+    const empB = employees.find(e => e.uid === b.userId);
+    if (!empA || !empB) return 0;
+    
+    const getScore = (p: UserProfile) => {
+      if (p.role === 'owner') return -20;
+      if (p.role === 'super') return -10;
+      if (p.role === 'hr') return 0;
+      const idx = supabaseService.EMPLOYEE_ORDER.indexOf(p.name);
+      return idx === -1 ? 999 : idx + 1;
+    };
+    return getScore(empA) - getScore(empB);
+  });
 
   const getEmpName = (uid: string) => employees.find(e => e.uid === uid)?.name || 'Unknown';
 

@@ -4,7 +4,7 @@ import { UserProfile, AttendanceRecord, LeaveRequest, Task, PayrollRecord, Perfo
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
-const EMPLOYEE_ORDER = [
+export const EMPLOYEE_ORDER = [
   "Dahami Divyanjali",
   "Achini Vindya",
   "Dilini Sanarathna",
@@ -546,7 +546,7 @@ export async function getPayroll(uid?: string): Promise<PayrollRecord[]> {
   
   let query = supabase
     .from('payroll')
-    .select('*, prof:profiles(name), profiles(name)')
+    .select('*, prof:profiles(name, role), profiles(name, role)')
     .order('created_at', { ascending: false });
     
   if (uid) {
@@ -582,10 +582,23 @@ export async function getPayroll(uid?: string): Promise<PayrollRecord[]> {
       intensive: Number(d.intensive),
       travelling: Number(d.travelling),
       netSalary: Number(d.net_salary),
-      status: d.status,
-      branch: d.branch,
-      createdAt: d.created_at
+      createdAt: d.created_at,
+      role: (profile as any)?.role
     };
+  });
+
+  // Apply custom sorting
+  return mapped.sort((a, b) => {
+    const getScore = (name: string, role?: string) => {
+      if (role === 'owner') return -20;
+      if (role === 'super') return -10;
+      if (role === 'hr') return 0;
+      const idx = EMPLOYEE_ORDER.indexOf(name);
+      return idx === -1 ? 999 : idx + 1;
+    };
+    const scoreA = getScore(a.userName, (a as any).role);
+    const scoreB = getScore(b.userName, (b as any).role);
+    return scoreA - scoreB;
   });
 }
 
