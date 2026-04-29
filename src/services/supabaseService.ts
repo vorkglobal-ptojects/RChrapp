@@ -4,6 +4,37 @@ import { UserProfile, AttendanceRecord, LeaveRequest, Task, PayrollRecord, Perfo
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
+const EMPLOYEE_ORDER = [
+  "Dahami Divyanjali",
+  "Achini Vindya",
+  "Dilini Sanarathna",
+  "Chamilka Botheju",
+  "A.V. Chamika Sonali",
+  "D.A. Dilupa Thamari",
+  "Harsha Thamali",
+  "Sachini Nirasha",
+  "Chaseera Sulani",
+  "Geethangani Pieris",
+  "W.K. Erandathi Perera",
+  "W.A. Chandima Dilrukishi",
+  "Rasika Priyangani",
+  "A.M.N. Sanjana",
+  "R.P. Ratnayake",
+  "Nihal Malawana",
+  "Syamalie Udumulla",
+  "Nishanthi Kuruppu",
+  "Nadeesha Dilhara",
+  "Chathurika Madushani",
+  "Maneesha H. Dias",
+  "Imashi Pramodaya",
+  "Aruni Indrachapa",
+  "Tharushi Sadumini",
+  "Lakshika Perera",
+  "Tharushi Apsara",
+  "D.M. Nilukshi Kawshalya",
+  "Dilki Isanka"
+];
+
 function mapProfile(data: any): UserProfile {
   return {
     uid: data.id,
@@ -36,7 +67,20 @@ function mapProfile(data: any): UserProfile {
 export async function getEmployees(): Promise<UserProfile[]> {
   const { data, error } = await supabase.from('profiles').select('*');
   if (error) throw error;
-  return (data || []).map(mapProfile);
+  
+  const mapped = (data || []).map(mapProfile);
+  
+  return mapped.sort((a, b) => {
+    // Sort logic: Owner/Super first, then HR, then the provided list
+    const getScore = (p: UserProfile) => {
+      if (p.role === 'owner') return -20;
+      if (p.role === 'super') return -10;
+      if (p.role === 'hr') return 0;
+      const idx = EMPLOYEE_ORDER.indexOf(p.name);
+      return idx === -1 ? 999 : idx + 1;
+    };
+    return getScore(a) - getScore(b);
+  });
 }
 
 export async function getEmployee(uid: string): Promise<UserProfile | null> {
