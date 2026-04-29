@@ -345,7 +345,7 @@ export async function saveLeave(req: Omit<LeaveRequest, 'id'>): Promise<string> 
 export async function updateLeave(
   id: string, status: 'Approved' | 'Rejected', approvedBy: string
 ): Promise<void> {
-  // 1. Get the request details first to know who it belongs to and how many days
+  // 1. Get the request details first
   const { data: req, error: fetchError } = await supabase
     .from('leave_requests')
     .select('*')
@@ -362,32 +362,59 @@ export async function updateLeave(
   }).eq('id', id);
   if (error) throw error;
 
-  // 3. If approved, update the user's used leaves balance
-  if (status === 'Approved') {
-    const start = new Date(req.start_date);
-    const end = new Date(req.end_date);
-    const diffDays = req.leave_type === 'Short' ? 1 : Math.ceil(Math.abs(end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
-    
-    // Get current profile to update JSONB
-    const { data: profile, error: pError } = await supabase
-      .from('profiles')
-      .select('used_leaves')
-      .eq('id', req.user_id)
-      .single();
-      
-    if (!pError && profile) {
-      const used = profile.used_leaves || { annual: 0, sick: 0, casual: 0, short: 0 };
-      const typeKey = req.leave_type.toLowerCase();
-      used[typeKey] = (used[typeKey] || 0) + diffDays;
-      
-      await supabase.from('profiles').update({ used_leaves: used }).eq('id', req.user_id);
-    }
-  }
+  // 3. Sync the user's used leaves balance
+  await syncLeaveBalance(req.user_id);
 }
 
 export async function deleteLeave(id: string): Promise<void> {
+  // Get request details first to know the userId
+  const { data: req } = await supabase.from('leave_requests').select('user_id').eq('id', id).single();
+  
   const { error } = await supabase.from('leave_requests').delete().eq('id', id);
   if (error) throw error;
+
+  // Sync balance after deletion
+  if (req?.user_id) {
+    await syncLeaveBalance(req.user_id);
+  }
+}
+
+export async function syncLeaveBalance(userId: string): Promise<void> {
+  // Fetch all approved leaves for this user
+  const { data: leaves, error: fetchError } = await supabase
+    .from('leave_requests')
+    .select('*')
+    .eq('user_id', userId)
+    .eq('status', 'Approved');
+
+  if (fetchError) throw fetchError;
+
+  const used = { annual: 0, sick: 0, casual: 0, short: 0 };
+  
+  (leaves || []).forEach(req => {
+    const start = new Date(req.start_date);
+    const end = new Date(req.end_date);
+    let diffDays = 0;
+
+    if (req.leave_type === 'Short') {
+      // Calculate hours between startTime and endTime
+      const [h1, m1] = (req.start_time || '09:00').split(':').map(Number);
+      const [h2, m2] = (req.end_time || '17:00').split(':').map(Number);
+      const totalMinutes = (h2 * 60 + m2) - (h1 * 60 + m1);
+      const hours = Math.max(0, totalMinutes / 60);
+      diffDays = hours / 8; // Assume 8 working hours = 1 day
+    } else {
+      diffDays = Math.ceil(Math.abs(end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+    }
+    
+    const typeKey = req.leave_type.toLowerCase() as keyof typeof used;
+    if (used.hasOwnProperty(typeKey)) {
+      used[typeKey] += diffDays;
+    }
+  });
+
+  // Update profile with the recalculated total
+  await supabase.from('profiles').update({ used_leaves: used }).eq('id', userId);
 }
 
 export async function deleteAttendance(id: string): Promise<void> {
@@ -411,6 +438,16 @@ export async function updateLeaveRequest(id: string, req: Partial<LeaveRequest>)
 
   const { error } = await supabase.from('leave_requests').update(payload).eq('id', id);
   if (error) throw error;
+
+  // Sync balance if we have the userId (we might need to fetch it if not provided in req)
+  if (req.userId) {
+    await syncLeaveBalance(req.userId);
+  } else {
+    const { data: existing } = await supabase.from('leave_requests').select('user_id').eq('id', id).single();
+    if (existing?.user_id) {
+      await syncLeaveBalance(existing.user_id);
+    }
+  }
 }
 
 // ─── Tasks ───────────────────────────────────────────────────────────────────

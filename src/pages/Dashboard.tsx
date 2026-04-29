@@ -52,6 +52,15 @@ export default function Dashboard() {
     return { text: 'Good Evening', icon: '🌙' };
   };
 
+  const formatBalance = (totalDays: number) => {
+    const d = Math.floor(totalDays);
+    const h = Math.round((totalDays - d) * 8);
+    const parts = [];
+    if (d > 0) parts.push(`${d} Day${d !== 1 ? 's' : ''}`);
+    if (h > 0) parts.push(`${h} Hour${h !== 1 ? 's' : ''}`);
+    return parts.length > 0 ? parts.join(' and ') : '0 Days';
+  };
+
   const loadData = async () => {
     if (!uid || !user) return;
     setLoading(true);
@@ -179,7 +188,16 @@ export default function Dashboard() {
     
     const start = new Date(startDate);
     const end = new Date(endDate);
-    const diffDays = leaveType === 'Short' ? 1 : Math.ceil(Math.abs(end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+    let diffDays = 0;
+    
+    if (leaveType === 'Short') {
+      const [h1, m1] = startTime.split(':').map(Number);
+      const [h2, m2] = endTime.split(':').map(Number);
+      const totalMinutes = (h2 * 60 + m2) - (h1 * 60 + m1);
+      diffDays = Math.max(0, totalMinutes / 60) / 8;
+    } else {
+      diffDays = Math.ceil(Math.abs(end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+    }
 
     if (diffDays > remaining) {
       toast.error(`Insufficient leave balance. Remaining: ${remaining} days.`);
@@ -385,7 +403,7 @@ export default function Dashboard() {
                   <div className="bg-white/5 backdrop-blur-md p-4 rounded-2xl border border-white/10">
                     <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-1">Remaining Leaves</p>
                     <p className="text-2xl font-black text-blue-400">
-                      {(user?.leaveQuotas?.annual || 14) - Object.values(user?.usedLeaves || {}).reduce((a: number, b: any) => a + (Number(b) || 0), 0)} d
+                      {Math.floor((user?.leaveQuotas?.annual || 14) - Object.values(user?.usedLeaves || {}).reduce((a: number, b: any) => a + (Number(b) || 0), 0))}d {Math.round(((user?.leaveQuotas?.annual || 14) - Object.values(user?.usedLeaves || {}).reduce((a: number, b: any) => a + (Number(b) || 0), 0) - Math.floor((user?.leaveQuotas?.annual || 14) - Object.values(user?.usedLeaves || {}).reduce((a: number, b: any) => a + (Number(b) || 0), 0))) * 8)}h
                     </p>
                   </div>
                   </>
@@ -483,9 +501,9 @@ export default function Dashboard() {
                   <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
                     <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Balance</p>
                     <p className="text-2xl font-black text-zinc-900">
-                      {Math.max(0, (user?.leaveQuotas.annual || 14) - Object.values(user?.usedLeaves || {}).reduce((a: number, b: any) => a + (Number(b) || 0), 0))}
+                      {Math.floor((user?.leaveQuotas.annual || 14) - Object.values(user?.usedLeaves || {}).reduce((a: number, b: any) => a + (Number(b) || 0), 0))}
                     </p>
-                    <p className="text-[10px] font-bold text-zinc-400">Days</p>
+                    <p className="text-[10px] font-bold text-zinc-400">Days & {Math.round(((user?.leaveQuotas.annual || 14) - Object.values(user?.usedLeaves || {}).reduce((a: number, b: any) => a + (Number(b) || 0), 0) - Math.floor((user?.leaveQuotas.annual || 14) - Object.values(user?.usedLeaves || {}).reduce((a: number, b: any) => a + (Number(b) || 0), 0))) * 8)}h</p>
                   </div>
                 </ResponsiveContainer>
               </div>

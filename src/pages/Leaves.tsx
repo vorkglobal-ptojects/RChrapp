@@ -60,7 +60,16 @@ export default function Leaves() {
     
     const start = new Date(startDate);
     const end = new Date(endDate);
-    const diffDays = leaveType === 'Short' ? 1 : Math.ceil(Math.abs(end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+    let diffDays = 0;
+    
+    if (leaveType === 'Short') {
+      const [h1, m1] = startTime.split(':').map(Number);
+      const [h2, m2] = endTime.split(':').map(Number);
+      const totalMinutes = (h2 * 60 + m2) - (h1 * 60 + m1);
+      diffDays = Math.max(0, totalMinutes / 60) / 8;
+    } else {
+      diffDays = Math.ceil(Math.abs(end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+    }
 
     if (diffDays > remaining && !editingLeaveId) {
       toast.error(`Insufficient leave balance. Remaining: ${remaining} days.`);
@@ -167,6 +176,18 @@ export default function Leaves() {
     return false;
   };
 
+  const formatBalance = (totalDays: number) => {
+    const d = Math.floor(totalDays);
+    const h = Math.round((totalDays - d) * 8);
+    const parts = [];
+    if (d > 0) parts.push(`${d} Day${d !== 1 ? 's' : ''}`);
+    if (h > 0) parts.push(`${h} Hour${h !== 1 ? 's' : ''}`);
+    return parts.length > 0 ? parts.join(' and ') : '0 Days';
+  };
+
+  const totalUsed = Object.values(user?.usedLeaves || {}).reduce((a: number, b: any) => a + (Number(b) || 0), 0);
+  const remainingDays = (user?.leaveQuotas?.annual || 14) - totalUsed;
+
   return (
     <div className="space-y-8 pb-12">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -191,14 +212,14 @@ export default function Leaves() {
           <div className="bg-white p-6 rounded-3xl border border-zinc-100 shadow-sm">
             <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-1">Total Leave Balance</p>
             <p className="text-2xl font-black text-orange-600">
-              {(user.leaveQuotas?.annual || 14) - Object.values(user.usedLeaves || {}).reduce((a: number, b: any) => a + (Number(b) || 0), 0)} Days
+              {formatBalance(remainingDays)}
               <span className="text-[10px] block opacity-60">Out of {user.leaveQuotas?.annual || 14} total annual days</span>
             </p>
           </div>
           <div className="bg-white p-6 rounded-3xl border border-zinc-100 shadow-sm">
-            <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-1">Leaves Taken</p>
+            <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-1">Leaves Taken pool</p>
             <p className="text-2xl font-black text-zinc-900">
-              {Object.values(user.usedLeaves || {}).reduce((a: number, b: any) => a + (Number(b) || 0), 0)} Days
+              {formatBalance(totalUsed)}
               <span className="text-[10px] block opacity-60">Across all types (Annual, Sick, Casual, Short)</span>
             </p>
           </div>
