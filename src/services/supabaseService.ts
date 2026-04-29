@@ -556,7 +556,7 @@ export async function getPayroll(uid?: string): Promise<PayrollRecord[]> {
   const { data, error } = await query;
   if (error) throw error;
   
-  return (data || []).map(d => {
+  const mapped = (data || []).map(d => {
     // Try multiple possible join keys from Supabase
     const rawProfile = d.prof || d.profiles;
     const profile = Array.isArray(rawProfile) ? rawProfile[0] : rawProfile;
@@ -582,6 +582,8 @@ export async function getPayroll(uid?: string): Promise<PayrollRecord[]> {
       intensive: Number(d.intensive),
       travelling: Number(d.travelling),
       netSalary: Number(d.net_salary),
+      status: d.status,
+      branch: d.branch,
       createdAt: d.created_at,
       role: (profile as any)?.role
     };
