@@ -3,13 +3,13 @@ import { PayrollRecord } from '../types';
 import { getEmployees } from './userService';
 
 export async function getPayroll(userId?: string): Promise<PayrollRecord[]> {
-  let query = supabase.from('payroll').select('*, profiles(name, role, branch)');
+  let query = supabase.from('payroll').select('*, profiles(name, role, branch, sort_order)');
   if (userId) query = query.eq('user_id', userId);
   
-  const { data, error } = await query.order('created_at', { ascending: false });
+  const { data, error } = await query;
   if (error) throw error;
 
-  return (data || []).map(d => ({
+  const records = (data || []).map(d => ({
     id: d.id,
     userId: d.user_id,
     userName: d.profiles?.name,
@@ -25,8 +25,12 @@ export async function getPayroll(userId?: string): Promise<PayrollRecord[]> {
     netSalary: Number(d.net_salary),
     status: d.status,
     createdAt: d.created_at,
-    branch: d.branch || d.profiles?.branch
+    branch: d.branch || d.profiles?.branch,
+    sortOrder: d.profiles?.sort_order ?? 999
   }));
+
+  // Sort by sortOrder
+  return records.sort((a, b) => a.sortOrder - b.sortOrder);
 }
 
 export async function generatePayroll(month: number, year: number): Promise<void> {

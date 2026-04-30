@@ -100,6 +100,7 @@ export interface PayrollRecord {
   status: 'Paid' | 'Pending';
   createdAt: any;
   branch: string;
+  sortOrder?: number;
   // Additional fields for management
   incentives?: number;
   bonus?: number;
