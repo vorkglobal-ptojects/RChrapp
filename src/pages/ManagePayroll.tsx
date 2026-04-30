@@ -16,7 +16,15 @@ export default function ManagePayroll() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editData, setEditData] = useState<Partial<PayrollRecord>>({});
   const [loading, setLoading] = useState(true);
+  const [filterMonth, setFilterMonth] = useState(new Date().getMonth());
+  const [filterYear, setFilterYear] = useState(new Date().getFullYear());
+  const [filterBranch, setFilterBranch] = useState('All Branches');
   const [justPaidIds, setJustPaidIds] = useState<Set<string>>(new Set());
+
+  const months = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'
+  ];
 
   useEffect(() => {
     loadData();
@@ -35,17 +43,20 @@ export default function ManagePayroll() {
     }
   };
 
+  const branches = ['All Branches', ...Array.from(new Set(payrolls.map(p => p.branch || 'General')))];
+
   const filteredPayrolls = payrolls.filter(p => {
-    const matchesSearch = p.userName.toLowerCase().includes(search.toLowerCase());
+    const matchesSearch = (p.userName || '').toLowerCase().includes(search.toLowerCase());
+    const matchesMonth = p.month === Number(filterMonth) + 1;
+    const matchesYear = p.year === Number(filterYear);
+    const matchesBranch = filterBranch === 'All Branches' || p.branch === filterBranch;
     
     // Only show Pending payrolls, but explicitly KEEP the ones they just paid in this session 
-    // so they can see the "Payment Processed" button successfully as requested.
     if (p.status !== 'Pending' && (!p.id || !justPaidIds.has(p.id))) {
       return false;
     }
     
-    // HR can see all pending payroll, but cannot edit their own (enforced below)
-    return matchesSearch;
+    return matchesSearch && matchesMonth && matchesYear && matchesBranch;
   });
 
   const handleSave = async (id: string) => {
@@ -104,8 +115,8 @@ export default function ManagePayroll() {
       </div>
 
       {/* Filters */}
-      <div className="bg-white p-6 rounded-4xl border border-zinc-100 shadow-sm flex flex-col md:flex-row gap-4">
-        <div className="relative flex-1">
+      <div className="bg-white p-6 rounded-4xl border border-zinc-100 shadow-sm flex flex-col lg:flex-row gap-4 items-center">
+        <div className="relative flex-1 w-full">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400" size={18} />
           <input 
             type="text" 
@@ -114,6 +125,32 @@ export default function ManagePayroll() {
             onChange={(e) => setSearch(e.target.value)}
             className="w-full pl-12 pr-4 py-3 bg-zinc-50 border border-zinc-100 rounded-2xl text-sm focus:ring-2 focus:ring-orange-500 outline-none transition-all"
           />
+        </div>
+        <div className="flex flex-wrap gap-3 w-full lg:w-auto justify-end">
+          <div className="flex items-center gap-2 bg-zinc-50 border border-zinc-100 rounded-2xl px-4 py-1">
+            <Filter size={14} className="text-zinc-400" />
+            <select 
+              value={filterBranch}
+              onChange={(e) => setFilterBranch(e.target.value)}
+              className="py-2 bg-transparent text-sm font-bold text-zinc-600 outline-none min-w-[120px]"
+            >
+              {branches.map(b => <option key={b} value={b}>{b}</option>)}
+            </select>
+          </div>
+          <select 
+            value={filterMonth}
+            onChange={(e) => setFilterMonth(Number(e.target.value))}
+            className="px-4 py-3 bg-zinc-50 border border-zinc-100 rounded-2xl text-sm font-bold text-zinc-600 outline-none focus:ring-2 focus:ring-orange-500"
+          >
+            {months.map((m, i) => <option key={m} value={i}>{m}</option>)}
+          </select>
+          <select 
+            value={filterYear}
+            onChange={(e) => setFilterYear(Number(e.target.value))}
+            className="px-4 py-3 bg-zinc-50 border border-zinc-100 rounded-2xl text-sm font-bold text-zinc-600 outline-none focus:ring-2 focus:ring-orange-500"
+          >
+            {[2024, 2025, 2026, 2027].map(y => <option key={y} value={y}>{y}</option>)}
+          </select>
         </div>
       </div>
 

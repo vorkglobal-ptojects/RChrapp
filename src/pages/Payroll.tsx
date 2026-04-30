@@ -202,9 +202,15 @@ export default function Payroll() {
   const [payrolls, setPayrolls] = useState<PayrollRecord[]>([]);
   const [search, setSearch] = useState('');
   const [filterMonth, setFilterMonth] = useState(new Date().getMonth());
+  const [filterYear, setFilterYear] = useState(new Date().getFullYear());
+  const [filterBranch, setFilterBranch] = useState('All Branches');
   const [isExporting, setIsExporting] = useState(false);
   const [isExportingExcel, setIsExportingExcel] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [showGenModal, setShowGenModal] = useState(false);
+  const [genMonth, setGenMonth] = useState(new Date().getMonth() + 1);
+  const [genYear, setGenYear] = useState(new Date().getFullYear());
+  const [isGenerating, setIsGenerating] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -225,10 +231,14 @@ export default function Payroll() {
     }
   };
 
+  const branches = ['All Branches', ...Array.from(new Set(payrolls.map(p => p.branch || 'General')))];
+
   const filteredPayrolls = payrolls.filter(p => {
     const matchesSearch = (p.userName || '').toLowerCase().includes(search.toLowerCase());
     const matchesMonth = p.month === Number(filterMonth) + 1; // months are 1-12 in DB
-    return matchesSearch && matchesMonth;
+    const matchesYear = p.year === Number(filterYear);
+    const matchesBranch = filterBranch === 'All Branches' || p.branch === filterBranch;
+    return matchesSearch && matchesMonth && matchesYear && matchesBranch;
   });
 
   const totalPayout = filteredPayrolls.reduce((acc, p) => acc + p.netSalary, 0);
@@ -311,11 +321,7 @@ export default function Payroll() {
           </button>
           {(user?.role === 'hr' || user?.role === 'super') && (
             <button 
-              onClick={async () => {
-                await supabaseService.generatePayroll(new Date().getMonth() + 1, new Date().getFullYear());
-                toast.success('Current month payroll generated');
-                loadData();
-              }}
+              onClick={() => setShowGenModal(true)}
               className="bg-zinc-900 text-white px-6 py-3 rounded-2xl font-bold flex items-center gap-2 hover:bg-zinc-800 transition-all shadow-lg shadow-zinc-100"
             >
               <Plus size={18} />
@@ -324,6 +330,81 @@ export default function Payroll() {
           )}
         </div>
       </div>
+
+      {/* Generation Modal */}
+      {showGenModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            className="bg-white rounded-4xl p-8 max-w-md w-full shadow-2xl border border-zinc-100"
+          >
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-black text-zinc-900">Generate Payroll</h2>
+              <button onClick={() => setShowGenModal(false)} className="p-2 hover:bg-zinc-100 rounded-xl transition-colors">
+                <X size={20} className="text-zinc-400" />
+              </button>
+            </div>
+            
+            <p className="text-zinc-500 mb-8 font-medium">Select the period you want to generate payroll records for. Existing records for the same month will be skipped.</p>
+            
+            <div className="grid grid-cols-2 gap-4 mb-8">
+              <div className="space-y-2">
+                <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest px-1">Month</label>
+                <select 
+                  value={genMonth}
+                  onChange={(e) => setGenMonth(Number(e.target.value))}
+                  className="w-full px-4 py-3 bg-zinc-50 border border-zinc-100 rounded-2xl text-sm font-bold text-zinc-700 outline-none focus:ring-2 focus:ring-orange-500 transition-all"
+                >
+                  {months.map((m, i) => <option key={m} value={i + 1}>{m}</option>)}
+                </select>
+              </div>
+              <div className="space-y-2">
+                <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest px-1">Year</label>
+                <select 
+                  value={genYear}
+                  onChange={(e) => setGenYear(Number(e.target.value))}
+                  className="w-full px-4 py-3 bg-zinc-50 border border-zinc-100 rounded-2xl text-sm font-bold text-zinc-700 outline-none focus:ring-2 focus:ring-orange-500 transition-all"
+                >
+                  {[2024, 2025, 2026, 2027].map(y => <option key={y} value={y}>{y}</option>)}
+                </select>
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <button 
+                onClick={() => setShowGenModal(false)}
+                className="flex-1 px-6 py-4 rounded-2xl font-bold text-zinc-500 bg-zinc-100 hover:bg-zinc-200 transition-all active:scale-95"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={async () => {
+                  setIsGenerating(true);
+                  try {
+                    await supabaseService.generatePayroll(genMonth, genYear);
+                    toast.success(`Payroll for ${months[genMonth-1]} ${genYear} generated`);
+                    setShowGenModal(false);
+                    loadData();
+                  } catch (err) {
+                    toast.error('Failed to generate payroll');
+                  } finally {
+                    setIsGenerating(false);
+                  }
+                }}
+                disabled={isGenerating}
+                className="flex-1 px-6 py-4 rounded-2xl font-bold text-white bg-zinc-900 hover:bg-zinc-800 transition-all active:scale-95 flex items-center justify-center gap-2 shadow-xl shadow-zinc-100"
+              >
+                {isGenerating ? (
+                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                ) : (
+                  'Generate'
+                )}
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
 
       {/* Stats Summary */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -357,8 +438,8 @@ export default function Payroll() {
       </div>
 
       {/* Filters */}
-      <div className="bg-white p-6 rounded-3xl border border-zinc-100 shadow-sm flex flex-col md:flex-row gap-4">
-        <div className="relative flex-1">
+      <div className="bg-white p-6 rounded-3xl border border-zinc-100 shadow-sm flex flex-col lg:flex-row gap-4 items-center">
+        <div className="relative flex-1 w-full">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400" size={18} />
           <input 
             type="text" 
@@ -368,13 +449,32 @@ export default function Payroll() {
             className="w-full pl-12 pr-4 py-3 bg-zinc-50 border border-zinc-100 rounded-2xl text-sm focus:ring-2 focus:ring-orange-500 outline-none transition-all"
           />
         </div>
-        <select 
-          value={filterMonth}
-          onChange={(e) => setFilterMonth(Number(e.target.value))}
-          className="px-4 py-3 bg-zinc-50 border border-zinc-100 rounded-2xl text-sm font-bold text-zinc-600 outline-none focus:ring-2 focus:ring-orange-500"
-        >
-          {months.map((m, i) => <option key={m} value={i}>{m}</option>)}
-        </select>
+        <div className="flex flex-wrap gap-3 w-full lg:w-auto justify-end">
+          <div className="flex items-center gap-2 bg-zinc-50 border border-zinc-100 rounded-2xl px-4 py-1">
+            <Filter size={14} className="text-zinc-400" />
+            <select 
+              value={filterBranch}
+              onChange={(e) => setFilterBranch(e.target.value)}
+              className="py-2 bg-transparent text-sm font-bold text-zinc-600 outline-none min-w-[120px]"
+            >
+              {branches.map(b => <option key={b} value={b}>{b}</option>)}
+            </select>
+          </div>
+          <select 
+            value={filterMonth}
+            onChange={(e) => setFilterMonth(Number(e.target.value))}
+            className="px-4 py-3 bg-zinc-50 border border-zinc-100 rounded-2xl text-sm font-bold text-zinc-600 outline-none focus:ring-2 focus:ring-orange-500"
+          >
+            {months.map((m, i) => <option key={m} value={i}>{m}</option>)}
+          </select>
+          <select 
+            value={filterYear}
+            onChange={(e) => setFilterYear(Number(e.target.value))}
+            className="px-4 py-3 bg-zinc-50 border border-zinc-100 rounded-2xl text-sm font-bold text-zinc-600 outline-none focus:ring-2 focus:ring-orange-500"
+          >
+            {[2024, 2025, 2026, 2027].map(y => <option key={y} value={y}>{y}</option>)}
+          </select>
+        </div>
       </div>
 
       {/* Payroll Table */}
