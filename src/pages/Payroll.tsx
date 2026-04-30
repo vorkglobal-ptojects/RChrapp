@@ -237,7 +237,8 @@ export default function Payroll() {
     const matchesSearch = (p.userName || '').toLowerCase().includes(search.toLowerCase());
     const matchesMonth = p.month === Number(filterMonth) + 1; // months are 1-12 in DB
     const matchesYear = p.year === Number(filterYear);
-    const matchesBranch = filterBranch === 'All Branches' || p.branch === filterBranch;
+    const matchesBranch = filterBranch === 'All Branches' || 
+                         p.branch?.toLowerCase() === filterBranch.toLowerCase();
     return matchesSearch && matchesMonth && matchesYear && matchesBranch;
   });
 
