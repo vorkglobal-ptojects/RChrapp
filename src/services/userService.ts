@@ -96,9 +96,12 @@ export async function registerFullEmployee(emp: UserProfile, password?: string):
   
   // Use a temporary client for signUp to avoid changing the main session
   const { createClient } = await import('@supabase/supabase-js');
+  const supabaseUrl = (import.meta as any).env.hrpulse_SUPABASE_URL || import.meta.env.VITE_SUPABASE_URL;
+  const supabaseAnonKey = (import.meta as any).env.hrpulse_SUPABASE_ANON_KEY || import.meta.env.VITE_SUPABASE_ANON_KEY;
+  
   const tempSupabase = createClient(
-    import.meta.env.VITE_SUPABASE_URL,
-    import.meta.env.VITE_SUPABASE_ANON_KEY,
+    supabaseUrl,
+    supabaseAnonKey,
     { auth: { persistSession: false } }
   );
 
