@@ -143,13 +143,14 @@ export default function ManagePayroll() {
       setEditingId(null);
       setEditData({});
       loadData();
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error saving payroll:', err);
       toast.error('Failed to save: ' + (err.message || 'unknown error'));
     }
   };
 
   const handleMarkAsPaid = async (userId: string, isDraft: boolean, recordId?: string) => {
+    if (!window.confirm('Are you sure you want to mark this as paid? This will lock the record.')) return;
     try {
       if (isDraft) {
         const original = displayList.find(p => p.userId === userId);
@@ -158,19 +159,22 @@ export default function ManagePayroll() {
       } else if (recordId) {
         await payrollService.updatePayroll(recordId, { status: 'Paid' });
       }
-
-      toast.success('Payment processed successfully');
-      if (recordId) {
-        setJustPaidIds(prev => {
-          const next = new Set(prev);
-          next.add(recordId);
-          return next;
-        });
-      }
+      toast.success('Payment marked as processed');
       loadData();
     } catch (err: any) {
       console.error('Error processing payment:', err);
       toast.error('Payment failed: ' + (err.message || 'unknown error'));
+    }
+  };
+
+  const handleUndoPayment = async (recordId: string) => {
+    if (!window.confirm('Revert payment status to pending?')) return;
+    try {
+      await payrollService.updatePayroll(recordId, { status: 'Pending' });
+      toast.success('Payment status reverted to pending');
+      loadData();
+    } catch (err) {
+      toast.error('Failed to revert status');
     }
   };
 
@@ -396,8 +400,9 @@ export default function ManagePayroll() {
                           <>
                             {(!isDraft && (p.status === 'Paid' || justPaidIds.has(p.id!))) ? (
                               <button 
-                                disabled
-                                className="px-6 py-3 bg-zinc-200 text-zinc-500 rounded-2xl font-bold text-xs shadow-inner flex items-center gap-2 cursor-not-allowed"
+                                onDoubleClick={() => p.id && handleUndoPayment(p.id)}
+                                className="px-6 py-3 bg-zinc-200 text-zinc-500 rounded-2xl font-bold text-xs shadow-inner flex items-center gap-2 cursor-pointer hover:bg-zinc-300 transition-all"
+                                title="Double-click to undo payment"
                               >
                                 <Check size={16} />
                                 Payment Processed
