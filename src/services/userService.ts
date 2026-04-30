@@ -93,7 +93,16 @@ export async function deleteEmployee(uid: string): Promise<void> {
 
 export async function registerFullEmployee(emp: UserProfile, password?: string): Promise<void> {
   const finalPassword = password || 'employee123';
-  const { data: authData, error: authError } = await supabase.auth.signUp({
+  
+  // Use a temporary client for signUp to avoid changing the main session
+  const { createClient } = await import('@supabase/supabase-js');
+  const tempSupabase = createClient(
+    import.meta.env.VITE_SUPABASE_URL,
+    import.meta.env.VITE_SUPABASE_ANON_KEY,
+    { auth: { persistSession: false } }
+  );
+
+  const { data: authData, error: authError } = await tempSupabase.auth.signUp({
     email: emp.email,
     password: finalPassword,
     options: {

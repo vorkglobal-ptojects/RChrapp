@@ -459,157 +459,156 @@ export default function Employees() {
                     </div>
 
                     <h3 className="text-sm font-black text-zinc-900 border-l-4 border-green-500 pl-3 mt-8">Payroll Details</h3>
-                    <div className="grid grid-cols-2 gap-4" id="payroll-fields">
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">Salary A</label>
-                        <input 
-                          name="salaryA" 
-                          type="number" 
-                          defaultValue={editingEmp?.salaryA} 
-                          required 
-                          onChange={(e) => {
-                            const form = e.target.form;
-                            if (form) {
-                              const sA = Number(e.target.value) || 0;
-                              const intensive = Number((form.elements.namedItem('intensive') as HTMLInputElement).value) || 0;
-                              const travelling = Number((form.elements.namedItem('travelling') as HTMLInputElement).value) || 0;
-                              const epf = Number((form.elements.namedItem('epf') as HTMLInputElement).value) || 0;
-                              const advances = Number((form.elements.namedItem('advances') as HTMLInputElement).value) || 0;
-                              const cover = Number((form.elements.namedItem('cover') as HTMLInputElement).value) || 0;
-                              (form.elements.namedItem('net') as HTMLInputElement).value = (sA + intensive + travelling - epf - advances - cover).toString();
-                            }
-                          }}
-                          className="w-full px-5 py-3 bg-zinc-50 border border-zinc-100 rounded-2xl text-sm font-medium focus:ring-2 focus:ring-green-500 outline-none" 
-                        />
+                      <div className="grid grid-cols-2 gap-4" id="payroll-fields">
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">Salary A</label>
+                          <input 
+                            name="salaryA" 
+                            type="number" 
+                            defaultValue={editingEmp?.salaryA || 0} 
+                            required 
+                            onChange={(e) => {
+                              const form = e.currentTarget.form;
+                              if (form) {
+                                const sA = Number(e.currentTarget.value) || 0;
+                                const intensive = Number((form.elements.namedItem('intensive') as HTMLInputElement)?.value) || 0;
+                                const travelling = Number((form.elements.namedItem('travelling') as HTMLInputElement)?.value) || 0;
+                                const epf = Number((form.elements.namedItem('epf') as HTMLInputElement)?.value) || 0;
+                                const advances = Number((form.elements.namedItem('advances') as HTMLInputElement)?.value) || 0;
+                                const cover = Number((form.elements.namedItem('cover') as HTMLInputElement)?.value) || 0;
+                                (form.elements.namedItem('net') as HTMLInputElement).value = (sA + intensive + travelling - epf - advances - cover).toString();
+                              }
+                            }}
+                            className="w-full px-5 py-3 bg-zinc-50 border border-zinc-100 rounded-2xl text-sm font-medium focus:ring-2 focus:ring-green-500 outline-none" 
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">EPF</label>
+                          <input 
+                            name="epf" 
+                            type="number" 
+                            defaultValue={editingEmp?.name === 'Dilini Sanarathna' ? (editingEmp?.epf ?? 0) : 2400} 
+                            readOnly={editingEmp?.name !== 'Dilini Sanarathna' && !(!editingEmp && false)} 
+                            onChange={(e) => {
+                              const form = e.currentTarget.form;
+                              if (form) {
+                                const sA = Number((form.elements.namedItem('salaryA') as HTMLInputElement)?.value) || 0;
+                                const intensive = Number((form.elements.namedItem('intensive') as HTMLInputElement)?.value) || 0;
+                                const travelling = Number((form.elements.namedItem('travelling') as HTMLInputElement)?.value) || 0;
+                                const epf = Number(e.currentTarget.value) || 0;
+                                const advances = Number((form.elements.namedItem('advances') as HTMLInputElement)?.value) || 0;
+                                const cover = Number((form.elements.namedItem('cover') as HTMLInputElement)?.value) || 0;
+                                (form.elements.namedItem('net') as HTMLInputElement).value = (sA + intensive + travelling - epf - advances - cover).toString();
+                              }
+                            }}
+                            className={cn(
+                              "w-full px-5 py-3 border border-zinc-100 rounded-2xl text-sm font-bold outline-none transition-all",
+                              editingEmp?.name === 'Dilini Sanarathna' 
+                                ? "bg-zinc-50 focus:ring-2 focus:ring-orange-500 text-zinc-900" 
+                                : "bg-zinc-100 text-zinc-500 cursor-not-allowed"
+                            )} 
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">Advances</label>
+                          <input 
+                            name="advances" 
+                            type="number" 
+                            defaultValue={editingEmp?.advances || 0} 
+                            required 
+                            onChange={(e) => {
+                              const form = e.currentTarget.form;
+                              if (form) {
+                                const sA = Number((form.elements.namedItem('salaryA') as HTMLInputElement)?.value) || 0;
+                                const intensive = Number((form.elements.namedItem('intensive') as HTMLInputElement)?.value) || 0;
+                                const travelling = Number((form.elements.namedItem('travelling') as HTMLInputElement)?.value) || 0;
+                                const epf = Number((form.elements.namedItem('epf') as HTMLInputElement)?.value) || 0;
+                                const advances = Number(e.currentTarget.value) || 0;
+                                const cover = Number((form.elements.namedItem('cover') as HTMLInputElement)?.value) || 0;
+                                (form.elements.namedItem('net') as HTMLInputElement).value = (sA + intensive + travelling - epf - advances - cover).toString();
+                              }
+                            }}
+                            className="w-full px-5 py-3 bg-zinc-50 border border-zinc-100 rounded-2xl text-sm font-medium focus:ring-2 focus:ring-red-500 outline-none" 
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">Cover Dedication</label>
+                          <input 
+                            name="cover" 
+                            type="number" 
+                            defaultValue={editingEmp?.cover || 0} 
+                            required 
+                            onChange={(e) => {
+                              const form = e.currentTarget.form;
+                              if (form) {
+                                const sA = Number((form.elements.namedItem('salaryA') as HTMLInputElement)?.value) || 0;
+                                const intensive = Number((form.elements.namedItem('intensive') as HTMLInputElement)?.value) || 0;
+                                const travelling = Number((form.elements.namedItem('travelling') as HTMLInputElement)?.value) || 0;
+                                const epf = Number((form.elements.namedItem('epf') as HTMLInputElement)?.value) || 0;
+                                const advances = Number((form.elements.namedItem('advances') as HTMLInputElement)?.value) || 0;
+                                const cover = Number(e.currentTarget.value) || 0;
+                                (form.elements.namedItem('net') as HTMLInputElement).value = (sA + intensive + travelling - epf - advances - cover).toString();
+                              }
+                            }}
+                            className="w-full px-5 py-3 bg-zinc-50 border border-zinc-100 rounded-2xl text-sm font-medium focus:ring-2 focus:ring-red-500 outline-none" 
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">Intensive</label>
+                          <input 
+                            name="intensive" 
+                            type="number" 
+                            defaultValue={editingEmp?.intensive || 0} 
+                            required 
+                            onChange={(e) => {
+                              const form = e.currentTarget.form;
+                              if (form) {
+                                const sA = Number((form.elements.namedItem('salaryA') as HTMLInputElement)?.value) || 0;
+                                const intensive = Number(e.currentTarget.value) || 0;
+                                const travelling = Number((form.elements.namedItem('travelling') as HTMLInputElement)?.value) || 0;
+                                const epf = Number((form.elements.namedItem('epf') as HTMLInputElement)?.value) || 0;
+                                const advances = Number((form.elements.namedItem('advances') as HTMLInputElement)?.value) || 0;
+                                const cover = Number((form.elements.namedItem('cover') as HTMLInputElement)?.value) || 0;
+                                (form.elements.namedItem('net') as HTMLInputElement).value = (sA + intensive + travelling - epf - advances - cover).toString();
+                              }
+                            }}
+                            className="w-full px-5 py-3 bg-zinc-50 border border-zinc-100 rounded-2xl text-sm font-medium focus:ring-2 focus:ring-green-500 outline-none" 
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">Travelling</label>
+                          <input 
+                            name="travelling" 
+                            type="number" 
+                            defaultValue={editingEmp?.travelling || 0} 
+                            required 
+                            onChange={(e) => {
+                              const form = e.currentTarget.form;
+                              if (form) {
+                                const sA = Number((form.elements.namedItem('salaryA') as HTMLInputElement)?.value) || 0;
+                                const intensive = Number((form.elements.namedItem('intensive') as HTMLInputElement)?.value) || 0;
+                                const travelling = Number(e.currentTarget.value) || 0;
+                                const epf = Number((form.elements.namedItem('epf') as HTMLInputElement)?.value) || 0;
+                                const advances = Number((form.elements.namedItem('advances') as HTMLInputElement)?.value) || 0;
+                                const cover = Number((form.elements.namedItem('cover') as HTMLInputElement)?.value) || 0;
+                                (form.elements.namedItem('net') as HTMLInputElement).value = (sA + intensive + travelling - epf - advances - cover).toString();
+                              }
+                            }}
+                            className="w-full px-5 py-3 bg-zinc-50 border border-zinc-100 rounded-2xl text-sm font-medium focus:ring-2 focus:ring-green-500 outline-none" 
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">Net Salary</label>
+                          <input 
+                            name="net" 
+                            type="number" 
+                            defaultValue={editingEmp?.net || 0} 
+                            required 
+                            readOnly
+                            className="w-full px-5 py-3 bg-zinc-100 border border-zinc-100 rounded-2xl text-sm font-black text-zinc-900 focus:ring-2 focus:ring-orange-500 outline-none" 
+                          />
+                        </div>
                       </div>
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">EPF</label>
-                        <input 
-                          name="epf" 
-                          type="number" 
-                          defaultValue={editingEmp?.name === 'Dilini Sanarathna' ? (editingEmp?.epf ?? 0) : 2400} 
-                          readOnly={editingEmp?.name !== 'Dilini Sanarathna' && !(!editingEmp && false)} 
-                          onChange={(e) => {
-                            const form = e.target.form;
-                            if (form) {
-                              const sA = Number((form.elements.namedItem('salaryA') as HTMLInputElement).value) || 0;
-                              const intensive = Number((form.elements.namedItem('intensive') as HTMLInputElement).value) || 0;
-                              const travelling = Number((form.elements.namedItem('travelling') as HTMLInputElement).value) || 0;
-                              const epf = Number(e.target.value) || 0;
-                              const advances = Number((form.elements.namedItem('advances') as HTMLInputElement).value) || 0;
-                              const cover = Number((form.elements.namedItem('cover') as HTMLInputElement).value) || 0;
-                              (form.elements.namedItem('net') as HTMLInputElement).value = (sA + intensive + travelling - epf - advances - cover).toString();
-                            }
-                          }}
-                          className={cn(
-                            "w-full px-5 py-3 border border-zinc-100 rounded-2xl text-sm font-bold outline-none transition-all",
-                            editingEmp?.name === 'Dilini Sanarathna' 
-                              ? "bg-zinc-50 focus:ring-2 focus:ring-orange-500 text-zinc-900" 
-                              : "bg-zinc-100 text-zinc-500 cursor-not-allowed"
-                          )} 
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">Advances</label>
-                        <input 
-                          name="advances" 
-                          type="number" 
-                          defaultValue={editingEmp?.advances} 
-                          required 
-                          onChange={(e) => {
-                            const form = e.target.form;
-                            if (form) {
-                              const sA = Number((form.elements.namedItem('salaryA') as HTMLInputElement).value);
-                              const sB = Number((form.elements.namedItem('salaryB') as HTMLInputElement).value);
-                              const intensive = Number((form.elements.namedItem('intensive') as HTMLInputElement).value);
-                              const travelling = Number((form.elements.namedItem('travelling') as HTMLInputElement).value);
-                              const epf = Number((form.elements.namedItem('epf') as HTMLInputElement).value);
-                              const advances = Number(e.target.value);
-                              const cover = Number((form.elements.namedItem('cover') as HTMLInputElement).value);
-                              (form.elements.namedItem('net') as HTMLInputElement).value = (sA + sB + intensive + travelling - epf - advances - cover).toString();
-                            }
-                          }}
-                          className="w-full px-5 py-3 bg-zinc-50 border border-zinc-100 rounded-2xl text-sm font-medium focus:ring-2 focus:ring-red-500 outline-none" 
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">Cover Dedication</label>
-                        <input 
-                          name="cover" 
-                          type="number" 
-                          defaultValue={editingEmp?.cover} 
-                          required 
-                          onChange={(e) => {
-                            const form = e.target.form;
-                            if (form) {
-                              const sA = Number((form.elements.namedItem('salaryA') as HTMLInputElement).value) || 0;
-                              const intensive = Number((form.elements.namedItem('intensive') as HTMLInputElement).value) || 0;
-                              const travelling = Number((form.elements.namedItem('travelling') as HTMLInputElement).value) || 0;
-                              const epf = Number((form.elements.namedItem('epf') as HTMLInputElement).value) || 0;
-                              const advances = Number((form.elements.namedItem('advances') as HTMLInputElement).value) || 0;
-                              const cover = Number(e.target.value) || 0;
-                              (form.elements.namedItem('net') as HTMLInputElement).value = (sA + intensive + travelling - epf - advances - cover).toString();
-                            }
-                          }}
-                          className="w-full px-5 py-3 bg-zinc-50 border border-zinc-100 rounded-2xl text-sm font-medium focus:ring-2 focus:ring-red-500 outline-none" 
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">Intensive</label>
-                        <input 
-                          name="intensive" 
-                          type="number" 
-                          defaultValue={editingEmp?.intensive} 
-                          required 
-                          onChange={(e) => {
-                            const form = e.target.form;
-                            if (form) {
-                              const sA = Number((form.elements.namedItem('salaryA') as HTMLInputElement).value) || 0;
-                              const intensive = Number(e.target.value) || 0;
-                              const travelling = Number((form.elements.namedItem('travelling') as HTMLInputElement).value) || 0;
-                              const epf = Number((form.elements.namedItem('epf') as HTMLInputElement).value) || 0;
-                              const advances = Number((form.elements.namedItem('advances') as HTMLInputElement).value) || 0;
-                              const cover = Number((form.elements.namedItem('cover') as HTMLInputElement).value) || 0;
-                              (form.elements.namedItem('net') as HTMLInputElement).value = (sA + intensive + travelling - epf - advances - cover).toString();
-                            }
-                          }}
-                          className="w-full px-5 py-3 bg-zinc-50 border border-zinc-100 rounded-2xl text-sm font-medium focus:ring-2 focus:ring-green-500 outline-none" 
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">Travelling</label>
-                        <input 
-                          name="travelling" 
-                          type="number" 
-                          defaultValue={editingEmp?.travelling} 
-                          required 
-                          onChange={(e) => {
-                            const form = e.target.form;
-                            if (form) {
-                              const sA = Number((form.elements.namedItem('salaryA') as HTMLInputElement).value) || 0;
-                              const intensive = Number((form.elements.namedItem('intensive') as HTMLInputElement).value) || 0;
-                              const travelling = Number((form.elements.namedItem('travelling') as HTMLInputElement).value) || 0;
-                              const epf = 2400;
-                              const advances = Number((form.elements.namedItem('advances') as HTMLInputElement).value) || 0;
-                              const cover = Number((form.elements.namedItem('cover') as HTMLInputElement).value) || 0;
-                              (form.elements.namedItem('net') as HTMLInputElement).value = (sA + intensive + travelling - epf - advances - cover).toString();
-                            }
-                          }}
-                          className="w-full px-5 py-3 bg-zinc-50 border border-zinc-100 rounded-2xl text-sm font-medium focus:ring-2 focus:ring-green-500 outline-none" 
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">Net Salary</label>
-                        <input 
-                          name="net" 
-                          type="number" 
-                          defaultValue={editingEmp?.net} 
-                          required 
-                          readOnly
-                          className="w-full px-5 py-3 bg-zinc-100 border border-zinc-100 rounded-2xl text-sm font-black text-zinc-900 focus:ring-2 focus:ring-orange-500 outline-none" 
-                        />
-                      </div>
-                    </div>
                   </div>
                 </div>
                 <div className="pt-8 flex gap-4 border-t border-zinc-50">
