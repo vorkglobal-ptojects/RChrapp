@@ -7,6 +7,12 @@ import {
 } from 'lucide-react';
 import { LeaveRequest, AttendanceRecord, Task, LeaveType, UserProfile } from '../types';
 import { cn, formatDate } from '../lib/utils';
+import * as userService from '../services/userService';
+import * as attendanceService from '../services/attendanceService';
+import * as leaveService from '../services/leaveService';
+import * as taskService from '../services/taskService';
+import * as payrollService from '../services/payrollService';
+import * as performanceService from '../services/performanceService';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, 
@@ -14,7 +20,6 @@ import {
 } from 'recharts';
 
 import { useAuth } from '../hooks/useAuth';
-import * as supabaseService from '../services/supabaseService';
 import { toast } from 'sonner';
 
 export default function Dashboard() {
@@ -68,10 +73,10 @@ export default function Dashboard() {
       const isManagement = user.role === 'hr' || user.role === 'owner' || user.role === 'super';
       
       const [empData, leaveData, attendanceData, taskData] = await Promise.all([
-        supabaseService.getEmployees(),
-        supabaseService.getLeaves(isManagement ? undefined : uid),
-        supabaseService.getAttendance(isManagement ? undefined : uid),
-        supabaseService.getTasks(selectedTaskUserId || uid!)
+        userService.getEmployees(),
+        leaveService.getLeaves(isManagement ? undefined : uid),
+        attendanceService.getAttendance(isManagement ? undefined : uid),
+        taskService.getTasks(selectedTaskUserId || uid!)
       ]);
 
       setEmployees(empData);
@@ -129,7 +134,7 @@ export default function Dashboard() {
 
   const handleCheckIn = async () => {
     if (!uid) return;
-    const success = await supabaseService.checkIn(uid);
+    const success = await attendanceService.checkIn(uid);
     if (success) {
       toast.success('Checked in successfully!');
       loadData();
@@ -140,7 +145,7 @@ export default function Dashboard() {
 
   const handleCheckOut = async () => {
     if (!uid) return;
-    const success = await supabaseService.checkOut(uid);
+    const success = await attendanceService.checkOut(uid);
     if (success) {
       toast.success('Checked out successfully!');
       loadData();
@@ -149,13 +154,13 @@ export default function Dashboard() {
     }
   };
 
-  const toggleTask = async (id: string) => {
-    await supabaseService.toggleTask(id);
+  const toggleTask = async (id: string, completed: boolean) => {
+    await taskService.toggleTask(id, !completed);
     loadData();
   };
 
   const deleteTask = async (id: string) => {
-    await supabaseService.deleteTask(id);
+    await taskService.deleteTask(id);
     loadData();
   };
 
@@ -166,12 +171,7 @@ export default function Dashboard() {
     const targetId = selectedTaskUserId || uid;
     if (!title || !targetId) return;
 
-    await supabaseService.saveTask({
-      userId: targetId,
-      title,
-      completed: false,
-      createdAt: new Date().toISOString(),
-    });
+    await taskService.addTask(targetId, title);
     form.reset();
     toast.success('Task added');
     loadData();
@@ -230,7 +230,7 @@ export default function Dashboard() {
         imageUrl: leaveImage || null
       };
       
-      await supabaseService.saveLeave(leaveData);
+      await leaveService.submitLeave(leaveData);
       
       toast.success('Leave request submitted successfully!');
       setIsModalOpen(false);

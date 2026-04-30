@@ -5,7 +5,7 @@ import { KeyRound, ShieldAlert } from 'lucide-react';
 import { motion } from 'motion/react';
 
 import { useAuth } from '../hooks/useAuth';
-import { supabase } from '../services/supabaseService';
+import { supabase } from '../lib/supabase';
 
 export default function ResetPassword() {
   const { user, uid, loading: authLoading } = useAuth();

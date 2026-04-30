@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { cn, formatDate } from '../lib/utils';
-import * as supabaseService from '../services/supabaseService';
+import * as userService from '../services/userService';
 import { toast } from 'sonner';
 
 export default function Profile() {
@@ -68,7 +68,7 @@ export default function Profile() {
       // 1. If a new file was selected, upload it to Supabase Storage first
       if (selectedFile && user.uid) {
         toast.loading('Uploading photo...');
-        finalPhotoUrl = await supabaseService.uploadAvatar(user.uid, selectedFile);
+        finalPhotoUrl = await userService.uploadAvatar(user.uid, selectedFile);
       }
 
       // 2. Prepare the updated user profile
@@ -82,7 +82,7 @@ export default function Profile() {
         status: (formData.status as any) || user.status || 'Available',
       };
       
-      await supabaseService.saveEmployee(updatedUser);
+      await userService.saveEmployee(updatedUser);
       updateUser(updatedUser);
       setIsEditing(false);
       setSelectedFile(null);

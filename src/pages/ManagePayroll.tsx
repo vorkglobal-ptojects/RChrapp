@@ -4,7 +4,8 @@ import {
   Filter, Edit2, Check, X, ArrowUpRight, ArrowDownRight, Lock
 } from 'lucide-react';
 import { PayrollRecord, UserProfile } from '../types';
-import * as supabaseService from '../services/supabaseService';
+import * as payrollService from '../services/payrollService';
+import * as userService from '../services/userService';
 import { useAuth } from '../hooks/useAuth';
 import { cn } from '../lib/utils';
 import { toast } from 'sonner';
@@ -36,8 +37,8 @@ export default function ManagePayroll() {
     setLoading(true);
     try {
       const [payrollData, employeeData] = await Promise.all([
-        supabaseService.getPayroll(),
-        supabaseService.getEmployees()
+        payrollService.getPayroll(),
+        userService.getEmployees()
       ]);
       setPayrolls(payrollData || []);
       setEmployees(employeeData || []);
@@ -112,25 +113,25 @@ export default function ManagePayroll() {
       const netSalary = salaryA - epf - advances - cover + intensive + travelling;
 
       if (isDraft) {
-        // INSERT new record
-        await supabaseService.supabase.from('payroll').insert({
-          user_id: userId,
+        // Use payrollService to save (it handles insert/update logic if we want, or I'll just use service calls)
+        await payrollService.savePayroll({
+          userId,
           month: filterMonth + 1,
           year: filterYear,
-          salary_a: salaryA,
-          salary_b: 0,
+          salaryA,
+          salaryB: 0,
           epf,
           advances,
           cover,
           intensive,
           travelling,
-          net_salary: netSalary,
+          netSalary,
           status: 'Pending',
           branch: original.branch
         });
       } else if (recordId) {
         // UPDATE existing
-        await supabaseService.updatePayroll(recordId, {
+        await payrollService.updatePayroll(recordId, {
           ...editData,
           epf,
           salaryB: 0,
@@ -151,27 +152,11 @@ export default function ManagePayroll() {
   const handleMarkAsPaid = async (userId: string, isDraft: boolean, recordId?: string) => {
     try {
       if (isDraft) {
-        // Must insert first, then set to Paid (or insert as Paid)
         const original = displayList.find(p => p.userId === userId);
         if (!original) return;
-
-        await supabaseService.supabase.from('payroll').insert({
-          user_id: userId,
-          month: filterMonth + 1,
-          year: filterYear,
-          salary_a: original.salaryA,
-          salary_b: 0,
-          epf: original.epf,
-          advances: original.advances,
-          cover: original.cover,
-          intensive: original.intensive,
-          travelling: original.travelling,
-          net_salary: original.netSalary,
-          status: 'Paid',
-          branch: original.branch
-        });
+        await payrollService.savePayroll({ ...original, status: 'Paid' });
       } else if (recordId) {
-        await supabaseService.updatePayroll(recordId, { status: 'Paid' });
+        await payrollService.updatePayroll(recordId, { status: 'Paid' });
       }
 
       toast.success('Payment processed successfully');
@@ -192,7 +177,7 @@ export default function ManagePayroll() {
   const handleGenerateAll = async () => {
     setIsGeneratingAll(true);
     try {
-      await supabaseService.generatePayroll(filterMonth + 1, filterYear);
+      await payrollService.generatePayroll(filterMonth + 1, filterYear);
       toast.success(`Payroll for ${months[filterMonth]} ${filterYear} generated for all staff`);
       loadData();
     } catch (err) {

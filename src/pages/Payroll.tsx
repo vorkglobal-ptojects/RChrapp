@@ -5,7 +5,7 @@ import {
   CheckCircle2, Clock, FileText, Plus
 } from 'lucide-react';
 import { PayrollRecord, UserProfile } from '../types';
-import * as supabaseService from '../services/supabaseService';
+import * as payrollService from '../services/payrollService';
 import { useAuth } from '../hooks/useAuth';
 import { cn, formatDate } from '../lib/utils';
 import { motion } from 'motion/react';
@@ -221,7 +221,7 @@ export default function Payroll() {
     setLoading(true);
     try {
       const isManagement = user.role === 'hr' || user.role === 'owner' || user.role === 'super';
-      const data = await supabaseService.getPayroll(isManagement ? undefined : user.uid);
+      const data = await payrollService.getPayroll(isManagement ? undefined : user.uid);
       setPayrolls(data || []);
     } catch (err) {
       console.error('Error loading payrolls:', err);
@@ -382,7 +382,7 @@ export default function Payroll() {
                 onClick={async () => {
                   setIsGenerating(true);
                   try {
-                    await supabaseService.generatePayroll(genMonth, genYear);
+                    await payrollService.generatePayroll(genMonth, genYear);
                     toast.success(`Payroll for ${months[genMonth-1]} ${genYear} generated`);
                     setShowGenModal(false);
                     loadData();

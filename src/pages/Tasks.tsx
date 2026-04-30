@@ -6,7 +6,7 @@ import { cn, formatDate } from '../lib/utils';
 import { motion, AnimatePresence } from 'motion/react';
 
 import { useAuth } from '../hooks/useAuth';
-import * as supabaseService from '../services/supabaseService';
+import * as taskService from '../services/taskService';
 
 export default function Tasks() {
   const { user, uid, loading: authLoading } = useAuth();
@@ -20,7 +20,7 @@ export default function Tasks() {
     if (!uid) return;
     setLoading(true);
     try {
-      const data = await supabaseService.getTasks(uid);
+      const data = await taskService.getTasks(uid);
       setTasks(data || []);
     } catch (err) {
       console.error('Error loading tasks:', err);
@@ -39,12 +39,7 @@ export default function Tasks() {
     if (!newTaskTitle.trim() || !uid) return;
 
     try {
-      await supabaseService.saveTask({
-        userId: uid,
-        title: newTaskTitle.trim(),
-        completed: false,
-        createdAt: new Date().toISOString(),
-      });
+      await taskService.addTask(uid, newTaskTitle.trim());
       setNewTaskTitle('');
       toast.success('Task added successfully');
       loadData();
@@ -56,7 +51,7 @@ export default function Tasks() {
 
   const toggleTask = async (id: string, completed: boolean) => {
     try {
-      await supabaseService.toggleTask(id);
+      await taskService.toggleTask(id);
       loadData();
     } catch (e: any) {
       console.error('Toggle task error:', e);
@@ -66,7 +61,7 @@ export default function Tasks() {
 
   const deleteTask = async (id: string) => {
     try {
-      await supabaseService.deleteTask(id);
+      await taskService.deleteTask(id);
       toast.success('Task deleted');
       loadData();
     } catch (e: any) {

@@ -5,7 +5,8 @@ import {
 } from 'lucide-react';
 import { utils, writeFile } from 'xlsx';
 import { AttendanceRecord, UserProfile } from '../types';
-import * as supabaseService from '../services/supabaseService';
+import * as userService from '../services/userService';
+import * as attendanceService from '../services/attendanceService';
 import { useAuth } from '../hooks/useAuth';
 import { cn, formatDate } from '../lib/utils';
 import { motion } from 'motion/react';
@@ -25,8 +26,8 @@ export default function Attendance() {
     try {
       const isManagement = user.role === 'hr' || user.role === 'owner' || user.role === 'super';
       const [empData, attData] = await Promise.all([
-        supabaseService.getEmployees(),
-        supabaseService.getAttendance(isManagement ? undefined : user.uid)
+        userService.getEmployees(),
+        attendanceService.getAttendance(isManagement ? undefined : user.uid)
       ]);
       setEmployees(empData);
       setRecords(attData);
@@ -58,11 +59,7 @@ export default function Attendance() {
     if (!empA || !empB) return 0;
     
     const getScore = (p: UserProfile) => {
-      if (p.role === 'owner') return -20;
-      if (p.role === 'super') return -10;
-      if (p.role === 'hr') return 0;
-      const idx = supabaseService.EMPLOYEE_ORDER.indexOf(p.name);
-      return idx === -1 ? 999 : idx + 1;
+      return p.sortOrder ?? 999;
     };
     return getScore(empA) - getScore(empB);
   });
@@ -140,7 +137,7 @@ export default function Attendance() {
             <div className="flex gap-2">
               <button 
                 onClick={async () => {
-                  if (await supabaseService.checkIn(user.uid)) {
+                  if (await attendanceService.checkIn(user.uid)) {
                     toast.success('Checked in!');
                     loadData();
                   } else {
@@ -154,7 +151,7 @@ export default function Attendance() {
               </button>
               <button 
                 onClick={async () => {
-                  if (await supabaseService.checkOut(user.uid)) {
+                  if (await attendanceService.checkOut(user.uid)) {
                     toast.success('Checked out!');
                     loadData();
                   } else {

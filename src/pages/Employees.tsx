@@ -6,7 +6,8 @@ import {
   ChevronLeft, ChevronRight, FileSpreadsheet
 } from 'lucide-react';
 import { UserProfile, UserRole } from '../types';
-import * as supabaseService from '../services/supabaseService';
+import * as userService from '../services/userService';
+import * as payrollService from '../services/payrollService';
 import { useAuth } from '../hooks/useAuth';
 import { cn, formatDate } from '../lib/utils';
 import { toast } from 'sonner';
@@ -35,7 +36,7 @@ export default function Employees() {
   const loadEmployees = async () => {
     setLoading(true);
     try {
-      const data = await supabaseService.getEmployees();
+      const data = await userService.getEmployees();
       setEmployees(data || []);
     } catch (err) {
       console.error('Error loading employees:', err);
@@ -67,7 +68,7 @@ export default function Employees() {
 
   const handleDelete = async (uid: string) => {
     if (window.confirm('Are you sure you want to delete this employee?')) {
-      await supabaseService.deleteEmployee(uid);
+      await userService.deleteEmployee(uid);
       toast.success('Employee deleted');
       loadEmployees();
     }
@@ -77,19 +78,18 @@ export default function Employees() {
     e.preventDefault();
     if (!selectedEmpForIncentive || !incentiveAmount) return;
 
-    const success = await supabaseService.addIncentiveDeduction(
-      selectedEmpForIncentive.uid, 
-      Number(incentiveAmount), 
-      incentiveType
-    );
-
-    if (success) {
+    // Note: This logic might need to be moved to payrollService or userService. 
+    // For now, I'll keep it as a call to userService since it updates profile.
+    const emp = await userService.getEmployee(selectedEmpForIncentive.uid);
+    if (emp) {
+      const field = incentiveType === 'incentive' ? 'intensive' : 'advances';
+      const updated = { ...emp, [field]: (emp[field] || 0) + Number(incentiveAmount) };
+      updated.net = (updated.salaryA || 0) + (updated.intensive || 0) + (updated.travelling || 0) - (updated.epf || 0) - (updated.advances || 0) - (updated.cover || 0);
+      await userService.saveEmployee(updated);
       toast.success(`${incentiveType === 'incentive' ? 'Incentive' : 'Deduction'} added successfully`);
       setIsIncentiveModalOpen(false);
       setIncentiveAmount('');
       loadEmployees();
-    } else {
-      toast.error('Failed to update payroll');
     }
   };
 
@@ -391,10 +391,10 @@ export default function Employees() {
                     };
 
                     if (editingEmp) {
-                      await supabaseService.saveEmployee(newEmp);
+                      await userService.saveEmployee(newEmp);
                       toast.success('Employee updated successfully');
                     } else {
-                      await supabaseService.registerFullEmployee(newEmp, data.password);
+                      await userService.registerFullEmployee(newEmp, data.password);
                       toast.success('New employee registered with login credentials');
                     }
                     setIsModalOpen(false);

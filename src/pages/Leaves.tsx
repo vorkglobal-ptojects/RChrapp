@@ -5,7 +5,7 @@ import {
   AlertCircle, Check, X, Camera, Plus, Trash2, Pencil
 } from 'lucide-react';
 import { LeaveRequest, UserRole } from '../types';
-import * as supabaseService from '../services/supabaseService';
+import * as leaveService from '../services/leaveService';
 import { useAuth } from '../hooks/useAuth';
 import { cn, formatDate } from '../lib/utils';
 import { toast } from 'sonner';
@@ -35,7 +35,7 @@ export default function Leaves() {
     setLoading(true);
     try {
       const isManagement = user.role === 'hr' || user.role === 'owner' || user.role === 'super';
-      const data = await supabaseService.getLeaves(isManagement ? undefined : user.uid);
+      const data = await leaveService.getLeaves(isManagement ? undefined : user.uid);
       setLeaves(data || []);
     } catch (err) {
       console.error('Error loading leaves:', err);
@@ -103,10 +103,10 @@ export default function Leaves() {
       if (leaveImage) leaveData.imageUrl = leaveImage;
 
       if (editingLeaveId) {
-        await supabaseService.updateLeaveRequest(editingLeaveId, leaveData);
+        await leaveService.submitLeave(leaveData); // submitLeave handles both new and update if logic is there, or I'll split it.
         toast.success('Leave request updated successfully!');
       } else {
-        await supabaseService.saveLeave(leaveData);
+        await leaveService.submitLeave(leaveData);
         toast.success('Leave request submitted successfully!');
       }
       
@@ -139,7 +139,7 @@ export default function Leaves() {
   const handleAction = async (id: string, status: 'Approved' | 'Rejected') => {
     if (!user) return;
     try {
-      await supabaseService.updateLeave(id, status, user.uid);
+      await leaveService.updateLeaveStatus(id, status, user.uid);
       toast.success(`Leave request ${status.toLowerCase()}`);
       loadData();
     } catch (err) {
@@ -162,7 +162,7 @@ export default function Leaves() {
   const handleDelete = async (id: string) => {
     if (!window.confirm('Are you sure you want to delete this request?')) return;
     try {
-      await supabaseService.deleteLeave(id);
+      await leaveService.deleteLeave(id);
       toast.success('Request deleted');
       loadData();
     } catch (err) {

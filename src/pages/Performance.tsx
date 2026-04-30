@@ -4,7 +4,10 @@ import {
   Star, AlertCircle, CheckCircle2, BarChart3
 } from 'lucide-react';
 import { PerformanceRecord, UserProfile, AttendanceRecord, Task } from '../types';
-import * as supabaseService from '../services/supabaseService';
+import * as userService from '../services/userService';
+import * as attendanceService from '../services/attendanceService';
+import * as taskService from '../services/taskService';
+import * as performanceService from '../services/performanceService';
 import { useAuth } from '../hooks/useAuth';
 import { cn } from '../lib/utils';
 import { ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
@@ -21,7 +24,7 @@ export default function Performance() {
   useEffect(() => {
     const loadEmps = async () => {
       try {
-        const emps = await supabaseService.getEmployees();
+        const emps = await userService.getEmployees();
         setEmployees(emps || []);
         if (!selectedEmp && emps && emps.length > 0) {
           const initial = user?.role === 'employee' ? emps.find(e => e.uid === user.uid) || emps[0] : emps[0];
@@ -41,8 +44,8 @@ export default function Performance() {
       setLoading(true);
       try {
         const [attData, taskData] = await Promise.all([
-          supabaseService.getAttendance(selectedEmp.uid),
-          supabaseService.getTasks(selectedEmp.uid)
+          attendanceService.getAttendance(selectedEmp.uid),
+          taskService.getTasks(selectedEmp.uid)
         ]);
         setAttendance(attData || []);
         setTasks(taskData || []);

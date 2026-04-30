@@ -6,7 +6,8 @@ import {
 import { cn, formatDate } from '../lib/utils';
 import { useAuth } from '../hooks/useAuth';
 import { LeaveRequest, Holiday } from '../types';
-import * as supabaseService from '../services/supabaseService';
+import * as leaveService from '../services/leaveService';
+import * as attendanceService from '../services/attendanceService';
 
 export default function Calendar() {
   const { user, uid } = useAuth();
@@ -22,7 +23,7 @@ export default function Calendar() {
     if (!uid) return;
     setLoading(true);
     try {
-      const data = await supabaseService.getLeaves(uid);
+      const data = await leaveService.getLeaves(uid);
       setRequests(data || []);
     } catch (err) {
       console.error('Error loading leaves for calendar:', err);
