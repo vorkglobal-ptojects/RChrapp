@@ -51,7 +51,7 @@ export default function Tasks() {
 
   const toggleTask = async (id: string, completed: boolean) => {
     try {
-      await taskService.toggleTask(id);
+      await taskService.toggleTask(id, !completed);
       loadData();
     } catch (e: any) {
       console.error('Toggle task error:', e);

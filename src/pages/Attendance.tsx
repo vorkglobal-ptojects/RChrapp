@@ -137,11 +137,12 @@ export default function Attendance() {
             <div className="flex gap-2">
               <button 
                 onClick={async () => {
-                  if (await attendanceService.checkIn(user.uid)) {
+                  try {
+                    await attendanceService.checkIn(user.uid);
                     toast.success('Checked in!');
                     loadData();
-                  } else {
-                    toast.error('Already checked in today');
+                  } catch (err) {
+                    toast.error('Failed to check in or already checked in today');
                   }
                 }}
                 className="bg-orange-500 text-white px-6 py-3 rounded-2xl font-bold flex items-center gap-2 hover:bg-orange-600 transition-all shadow-lg shadow-orange-100"
@@ -151,10 +152,11 @@ export default function Attendance() {
               </button>
               <button 
                 onClick={async () => {
-                  if (await attendanceService.checkOut(user.uid)) {
+                  try {
+                    await attendanceService.checkOut(user.uid);
                     toast.success('Checked out!');
                     loadData();
-                  } else {
+                  } catch (err) {
                     toast.error('No active shift found');
                   }
                 }}

@@ -34,6 +34,7 @@ export interface UserProfile {
     casual: number;
     short: number;
   };
+  sortOrder?: number;
 }
 
 export interface AttendanceRecord {

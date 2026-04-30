@@ -59,8 +59,28 @@ export async function generatePayroll(month: number, year: number): Promise<void
   }
 }
 
+export async function savePayroll(record: Partial<PayrollRecord>): Promise<void> {
+  const { error } = await supabase.from('payroll').insert({
+    user_id: record.userId,
+    month: record.month,
+    year: record.year,
+    salary_a: record.salaryA,
+    salary_b: record.salaryB || 0,
+    epf: record.epf,
+    advances: record.advances || 0,
+    cover: record.cover || 0,
+    intensive: record.intensive || 0,
+    travelling: record.travelling || 0,
+    net_salary: record.netSalary,
+    status: record.status || 'Pending',
+    branch: record.branch
+  });
+  if (error) throw error;
+}
+
 export async function updatePayroll(id: string, updates: Partial<PayrollRecord>): Promise<void> {
   const payload: any = {};
+  if (updates.salaryA !== undefined) payload.salary_a = updates.salaryA;
   if (updates.salaryB !== undefined) payload.salary_b = updates.salaryB;
   if (updates.epf !== undefined) payload.epf = updates.epf;
   if (updates.advances !== undefined) payload.advances = updates.advances;

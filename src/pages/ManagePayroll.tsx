@@ -108,7 +108,7 @@ export default function ManagePayroll() {
       const travelling = Number(editData.travelling ?? original.travelling) || 0;
       const epf = Number(editData.epf ?? original.epf) || 0;
       const cover = Number(editData.cover ?? original.cover) || 0;
-      const salaryA = Number(original.salaryA) || 0;
+      const salaryA = Number(editData.salaryA ?? original.salaryA) || 0;
       
       const netSalary = salaryA - epf - advances - cover + intensive + travelling;
 
@@ -279,7 +279,16 @@ export default function ManagePayroll() {
               <div className="flex-1 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-4">
                 <div>
                   <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1">Salary A</p>
-                  <p className="text-sm font-black text-zinc-900">{(p.salaryA || 0).toLocaleString()}</p>
+                  {editingId === uniqueId ? (
+                    <input 
+                      type="number" 
+                      value={editData.salaryA ?? p.salaryA}
+                      onChange={(e) => setEditData({ ...editData, salaryA: Number(e.target.value) })}
+                      className="w-full px-3 py-1 bg-zinc-50 border border-zinc-100 rounded-lg text-sm font-bold text-zinc-900 outline-none focus:ring-2 focus:ring-orange-500"
+                    />
+                  ) : (
+                    <p className="text-sm font-black text-zinc-900">{(p.salaryA || 0).toLocaleString()}</p>
+                  )}
                 </div>
 
                 <div>

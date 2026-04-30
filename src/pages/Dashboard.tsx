@@ -134,22 +134,22 @@ export default function Dashboard() {
 
   const handleCheckIn = async () => {
     if (!uid) return;
-    const success = await attendanceService.checkIn(uid);
-    if (success) {
+    try {
+      await attendanceService.checkIn(uid);
       toast.success('Checked in successfully!');
       loadData();
-    } else {
-      toast.error('Already checked in today');
+    } catch (err) {
+      toast.error('Failed to check in or already checked in today');
     }
   };
 
   const handleCheckOut = async () => {
     if (!uid) return;
-    const success = await attendanceService.checkOut(uid);
-    if (success) {
+    try {
+      await attendanceService.checkOut(uid);
       toast.success('Checked out successfully!');
       loadData();
-    } else {
+    } catch (err) {
       toast.error('Failed to check out');
     }
   };
@@ -182,8 +182,8 @@ export default function Dashboard() {
     if (!uid || !user) return;
     
     // Consolidated Quota validation (14 days total)
-    const totalQuota = user.leaveQuotas?.annual || 14;
-    const totalUsed = Object.values(user.usedLeaves || {}).reduce((a: number, b: any) => a + (Number(b) || 0), 0);
+    const totalQuota = Number(user.leaveQuotas?.annual) || 14;
+    const totalUsed = (Object.values(user.usedLeaves || {}) as number[]).reduce((a: number, b: any) => a + (Number(b) || 0), 0);
     let remaining = totalQuota - totalUsed;
     
     const start = new Date(startDate);
@@ -410,9 +410,15 @@ export default function Dashboard() {
                     <p className="text-2xl font-black">LKR {user?.net.toLocaleString()}</p>
                   </div>
                   <div className="bg-white/5 backdrop-blur-md p-4 rounded-2xl border border-white/10">
-                    <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-1">Remaining Leaves</p>
                     <p className="text-2xl font-black text-blue-400">
-                      {Math.floor((user?.leaveQuotas?.annual || 14) - Object.values(user?.usedLeaves || {}).reduce((a: number, b: any) => a + (Number(b) || 0), 0))}d {Math.round(((user?.leaveQuotas?.annual || 14) - Object.values(user?.usedLeaves || {}).reduce((a: number, b: any) => a + (Number(b) || 0), 0) - Math.floor((user?.leaveQuotas?.annual || 14) - Object.values(user?.usedLeaves || {}).reduce((a: number, b: any) => a + (Number(b) || 0), 0))) * 8)}h
+                      {(() => {
+                        const totalUsed = (Object.values(user?.usedLeaves || {}) as number[]).reduce((a: number, b: any) => a + (Number(b) || 0), 0);
+                        const annual = Number(user?.leaveQuotas?.annual) || 14;
+                        const remaining = annual - totalUsed;
+                        const days = Math.floor(remaining);
+                        const hours = Math.round((remaining - days) * 8);
+                        return `${days}d ${hours}h`;
+                      })()}
                     </p>
                   </div>
                   </>
@@ -485,8 +491,16 @@ export default function Dashboard() {
                   <PieChart>
                     <Pie
                       data={user ? [
-                        { name: 'Remaining', value: Math.max(0, (user.leaveQuotas.annual || 14) - Object.values(user.usedLeaves || {}).reduce((a: number, b: any) => a + (Number(b) || 0), 0)), color: '#f97316' },
-                        { name: 'Used', value: Object.values(user.usedLeaves || {}).reduce((a: number, b: any) => a + (Number(b) || 0), 0), color: '#f4f4f5' },
+                        { 
+                          name: 'Remaining', 
+                          value: Math.max(0, (Number(user.leaveQuotas.annual) || 14) - (Object.values(user.usedLeaves || {}) as number[]).reduce((a: number, b: any) => a + (Number(b) || 0), 0)), 
+                          color: '#f97316' 
+                        },
+                        { 
+                          name: 'Used', 
+                          value: Object.values(user.usedLeaves || {}).reduce((a: number, b: any) => a + (Number(b) || 0), 0), 
+                          color: '#f4f4f5' 
+                        },
                       ] : []}
                       innerRadius={60}
                       outerRadius={80}
@@ -510,9 +524,21 @@ export default function Dashboard() {
                   <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
                     <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Balance</p>
                     <p className="text-2xl font-black text-zinc-900">
-                      {Math.floor((user?.leaveQuotas.annual || 14) - Object.values(user?.usedLeaves || {}).reduce((a: number, b: any) => a + (Number(b) || 0), 0))}
+                      {(() => {
+                        const totalUsed = (Object.values(user?.usedLeaves || {}) as number[]).reduce((a: number, b: any) => a + (Number(b) || 0), 0);
+                        const annual = Number(user?.leaveQuotas.annual) || 14;
+                        return Math.floor(annual - totalUsed);
+                      })()}
                     </p>
-                    <p className="text-[10px] font-bold text-zinc-400">Days & {Math.round(((user?.leaveQuotas.annual || 14) - Object.values(user?.usedLeaves || {}).reduce((a: number, b: any) => a + (Number(b) || 0), 0) - Math.floor((user?.leaveQuotas.annual || 14) - Object.values(user?.usedLeaves || {}).reduce((a: number, b: any) => a + (Number(b) || 0), 0))) * 8)}h</p>
+                    <p className="text-[10px] font-bold text-zinc-400">
+                      {(() => {
+                        const totalUsed = (Object.values(user?.usedLeaves || {}) as number[]).reduce((a: number, b: any) => a + (Number(b) || 0), 0);
+                        const annual = Number(user?.leaveQuotas.annual) || 14;
+                        const remaining = annual - totalUsed;
+                        const hours = Math.round((remaining - Math.floor(remaining)) * 8);
+                        return `Days & ${hours}h`;
+                      })()}
+                    </p>
                   </div>
                 </ResponsiveContainer>
               </div>
@@ -623,7 +649,7 @@ export default function Dashboard() {
                     )}
                   >
                     <div 
-                      onClick={() => toggleTask(task.id!)}
+                      onClick={() => toggleTask(task.id!, task.completed)}
                       className={cn(
                         "w-5 h-5 rounded-md border flex items-center justify-center transition-all cursor-pointer shadow-sm",
                         task.completed ? "bg-green-500 border-green-500 text-white" : "border-zinc-300 group-hover:border-orange-400 bg-white"
@@ -632,7 +658,7 @@ export default function Dashboard() {
                       {task.completed && <CheckCircle2 size={12} />}
                     </div>
                     <span 
-                      onClick={() => toggleTask(task.id!)}
+                      onClick={() => toggleTask(task.id!, task.completed)}
                       className={cn("flex-1 text-sm font-medium cursor-pointer", task.completed ? "line-through text-zinc-400" : "text-zinc-700")}
                     >
                       {task.title}

@@ -50,3 +50,8 @@ export async function updateLeaveStatus(id: string, status: 'Approved' | 'Reject
     .eq('id', id);
   if (error) throw error;
 }
+
+export async function deleteLeave(id: string): Promise<void> {
+  const { error } = await supabase.from('leave_requests').delete().eq('id', id);
+  if (error) throw error;
+}

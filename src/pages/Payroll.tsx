@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { 
   CreditCard, Download, Search, Filter, 
   ArrowUpRight, ArrowDownRight, DollarSign,
-  CheckCircle2, Clock, FileText, Plus
+  CheckCircle2, Clock, FileText, Plus, X
 } from 'lucide-react';
 import { PayrollRecord, UserProfile } from '../types';
 import * as payrollService from '../services/payrollService';

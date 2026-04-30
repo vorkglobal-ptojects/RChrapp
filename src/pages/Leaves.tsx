@@ -55,8 +55,8 @@ export default function Leaves() {
     
     // Consolidated Quota validation (14 days total)
     const totalQuota = user.leaveQuotas?.annual || 14;
-    const totalUsed = Object.values(user.usedLeaves || {}).reduce((a: number, b: any) => a + (Number(b) || 0), 0);
-    let remaining = totalQuota - totalUsed;
+    const totalUsed = (Object.values(user.usedLeaves || {}) as number[]).reduce((a: number, b: number) => a + (Number(b) || 0), 0);
+    const remaining = (Number(user.leaveQuotas?.annual) || 14) - totalUsed;
     
     const start = new Date(startDate);
     const end = new Date(endDate);
@@ -194,8 +194,8 @@ export default function Leaves() {
     return parts.length > 0 ? parts.join(' and ') : '0 Days';
   };
 
-  const totalUsed = Object.values(user?.usedLeaves || {}).reduce((a: number, b: any) => a + (Number(b) || 0), 0);
-  const remainingDays = (user?.leaveQuotas?.annual || 14) - totalUsed;
+  const totalUsed = (Object.values(user?.usedLeaves || {}) as number[]).reduce((a: number, b: number) => a + (Number(b) || 0), 0);
+  const remainingDays = (Number(user?.leaveQuotas?.annual) || 14) - totalUsed;
 
   return (
     <div className="space-y-8 pb-12">
