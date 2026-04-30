@@ -493,7 +493,7 @@ export default function Dashboard() {
                       data={user ? [
                         { 
                           name: 'Remaining', 
-                          value: Math.max(0, (Number(user.leaveQuotas.annual) || 14) - (Object.values(user.usedLeaves || {}) as number[]).reduce((a: number, b: any) => a + (Number(b) || 0), 0)), 
+                          value: Math.max(0, (Number(user.leaveQuotas?.annual) || 14) - (Object.values(user.usedLeaves || {}) as number[]).reduce((a: number, b: any) => a + (Number(b) || 0), 0)), 
                           color: '#f97316' 
                         },
                         { 
@@ -526,7 +526,7 @@ export default function Dashboard() {
                     <p className="text-2xl font-black text-zinc-900">
                       {(() => {
                         const totalUsed = (Object.values(user?.usedLeaves || {}) as number[]).reduce((a: number, b: any) => a + (Number(b) || 0), 0);
-                        const annual = Number(user?.leaveQuotas.annual) || 14;
+                        const annual = Number(user?.leaveQuotas?.annual) || 14;
                         return Math.floor(annual - totalUsed);
                       })()}
                     </p>

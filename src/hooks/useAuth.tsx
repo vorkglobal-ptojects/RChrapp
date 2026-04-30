@@ -52,8 +52,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           travelling: Number(data.travelling),
           net: Number(data.net),
           performanceScore: Number(data.performance_score),
-          leaveQuotas: data.leave_quotas,
-          usedLeaves: data.used_leaves,
+          leaveQuotas: data.leave_quotas || { annual: 14, sick: 7, casual: 7, short: 8 },
+          usedLeaves: data.used_leaves || { annual: 0, sick: 0, casual: 0, short: 0 },
         };
         setUser(profile);
       }
