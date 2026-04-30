@@ -107,6 +107,15 @@ export async function registerFullEmployee(emp: UserProfile, password?: string):
   if (authError) throw authError;
   if (!authData.user) throw new Error('Failed to create login account');
 
+  // Find the current max sort order to append this employee to the end
+  const { data: maxSortData } = await supabase
+    .from('profiles')
+    .select('sort_order')
+    .order('sort_order', { ascending: false })
+    .limit(1);
+  
+  const nextSortOrder = maxSortData && maxSortData[0] ? (maxSortData[0].sort_order + 1) : 1;
+
   const { error: profileError } = await supabase.from('profiles').insert({
     id: authData.user.id,
     name: emp.name,
@@ -130,6 +139,7 @@ export async function registerFullEmployee(emp: UserProfile, password?: string):
     performance_score: emp.performanceScore,
     leave_quotas: emp.leaveQuotas,
     used_leaves: emp.usedLeaves,
+    sort_order: nextSortOrder
   });
 
   if (profileError) throw profileError;
