@@ -14,7 +14,7 @@ import { motion, AnimatePresence } from 'motion/react';
 export default function Leaves() {
   const { user } = useAuth();
   const [leaves, setLeaves] = useState<LeaveRequest[]>([]);
-  const [filter, setFilter] = useState<'All' | 'Pending' | 'Approved' | 'Rejected'>('All');
+  const [filter, setFilter] = useState<'All' | 'Pending' | 'Approved' | 'Rejected' | 'Unapproved'>('All');
   const [search, setSearch] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -177,7 +177,15 @@ export default function Leaves() {
   };
 
   const filteredLeaves = leaves.filter(l => {
-    const matchesFilter = filter === 'All' || l.status === filter;
+    let matchesFilter = filter === 'All' || l.status === filter;
+    
+    // Handle "Unapproved" virtual status
+    if (filter === 'Unapproved') {
+      matchesFilter = l.status === 'Rejected' && !l.approvedBy;
+    } else if (filter === 'Rejected') {
+      matchesFilter = l.status === 'Rejected' && !!l.approvedBy;
+    }
+
     const matchesSearch = (l.userName || '').toLowerCase().includes(search.toLowerCase()) || 
                          (l.leaveType || '').toLowerCase().includes(search.toLowerCase());
     return matchesFilter && matchesSearch;
@@ -282,7 +290,7 @@ export default function Leaves() {
           />
         </div>
         <div className="flex gap-2">
-          {['All', 'Pending', 'Approved', 'Rejected'].map((f) => (
+          {['All', 'Pending', 'Approved', 'Rejected', 'Unapproved'].map((f) => (
             <button
               key={f}
               onClick={() => setFilter(f as any)}
@@ -356,10 +364,11 @@ export default function Leaves() {
                   <div className={cn(
                     "px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border",
                     req.status === 'Approved' ? "bg-green-50 text-green-700 border-green-100" :
-                    req.status === 'Rejected' ? "bg-red-50 text-red-700 border-red-100" :
+                    req.status === 'Rejected' && req.approvedBy ? "bg-red-50 text-red-700 border-red-100" :
+                    req.status === 'Rejected' && !req.approvedBy ? "bg-zinc-50 text-zinc-700 border-zinc-100" :
                     "bg-amber-50 text-amber-700 border-amber-100"
                   )}>
-                    {req.status}
+                    {req.status === 'Rejected' && !req.approvedBy ? 'Unapproved' : req.status}
                   </div>
                   {req.imageUrl && (
                     <a 
