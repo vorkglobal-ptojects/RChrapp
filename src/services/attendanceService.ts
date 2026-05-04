@@ -31,9 +31,9 @@ export async function checkIn(userId: string): Promise<void> {
   const now = new Date();
   const dateStr = now.toISOString().split('T')[0];
   
-  // Rule: Late if after 8:30 AM Colombo time
+  // Rule: Late if after 9:10 AM Colombo time
   const colomboNow = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Colombo' }));
-  const isLate = colomboNow.getHours() > 8 || (colomboNow.getHours() === 8 && colomboNow.getMinutes() > 30);
+  const isLate = colomboNow.getHours() > 9 || (colomboNow.getHours() === 9 && colomboNow.getMinutes() > 10);
 
   const { error } = await supabase.from('attendance').insert({
     user_id: userId,
@@ -49,9 +49,9 @@ export async function checkOut(userId: string): Promise<void> {
   const now = new Date();
   const dateStr = now.toISOString().split('T')[0];
 
-  // Rule: Early out if before 5:00 PM Colombo time
+  // Rule: Early out if before 5:30 PM Colombo time
   const colomboNow = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Colombo' }));
-  const isEarlyOut = colomboNow.getHours() < 17;
+  const isEarlyOut = colomboNow.getHours() < 17 || (colomboNow.getHours() === 17 && colomboNow.getMinutes() < 30);
 
   const { error } = await supabase
     .from('attendance')

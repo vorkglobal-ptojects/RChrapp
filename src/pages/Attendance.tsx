@@ -18,6 +18,7 @@ export default function Attendance() {
   const [employees, setEmployees] = useState<UserProfile[]>([]);
   const [search, setSearch] = useState('');
   const [filterBranch, setFilterBranch] = useState('All');
+  const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0]);
   const [loading, setLoading] = useState(true);
 
   const loadData = async () => {
@@ -49,7 +50,8 @@ export default function Attendance() {
     const emp = employees.find(e => e.uid === r.userId);
     const matchesSearch = emp ? emp.name.toLowerCase().includes(search.toLowerCase()) : true;
     const matchesBranch = filterBranch === 'All' || (emp ? emp.branch === filterBranch : true);
-    return matchesSearch && matchesBranch;
+    const matchesDate = !selectedDate || r.date === selectedDate;
+    return matchesSearch && matchesBranch && matchesDate;
   }).sort((a, b) => {
     const dateDiff = new Date(b.date).getTime() - new Date(a.date).getTime();
     if (dateDiff !== 0) return dateDiff;
@@ -90,7 +92,7 @@ export default function Attendance() {
         'Check-In': checkInDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         'Check-Out': checkOutDate ? checkOutDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '--:--',
         'Is Late (After 09:10 AM)': record.isLate ? 'Yes' : 'No',
-        'Is Early Out (Before 05:15 PM)': record.isEarlyOut ? 'Yes' : 'No',
+        'Is Early Out (Before 05:30 PM)': record.isEarlyOut ? 'Yes' : 'No',
         'Status': record.checkOut ? 'Completed' : 'Active',
         'Work Hours': workHours
       };
@@ -118,7 +120,7 @@ export default function Attendance() {
             <div className="flex items-center gap-1.5">
               <Clock size={14} className="text-zinc-400" />
               <span className="text-zinc-500">Standard Shift:</span>
-              <span className="text-zinc-900">08:30 AM - 06:00 PM</span>
+              <span className="text-zinc-900">08:30 AM - 05:30 PM</span>
             </div>
             <div className="w-px h-3 bg-zinc-300 hidden sm:block"></div>
             <div className="flex items-center gap-1.5">
@@ -128,7 +130,7 @@ export default function Attendance() {
             <div className="w-px h-3 bg-zinc-300 hidden sm:block"></div>
             <div className="flex items-center gap-1.5">
               <span className="text-amber-500">Early Out:</span>
-              <span className="text-zinc-900">Before 05:15 PM</span>
+              <span className="text-zinc-900">Before 05:30 PM</span>
             </div>
           </div>
         </div>
@@ -186,7 +188,7 @@ export default function Attendance() {
             </div>
             <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Total Logs</span>
           </div>
-          <p className="text-2xl font-black text-zinc-900">{records.length}</p>
+          <p className="text-2xl font-black text-zinc-900">{filteredRecords.length}</p>
         </div>
         <div className="bg-white p-6 rounded-3xl border border-zinc-100 shadow-sm">
           <div className="flex items-center gap-3 mb-2">
@@ -195,7 +197,7 @@ export default function Attendance() {
             </div>
             <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Late Check-ins</span>
           </div>
-          <p className="text-2xl font-black text-zinc-900">{records.filter(r => r.isLate).length}</p>
+          <p className="text-2xl font-black text-zinc-900">{filteredRecords.filter(r => r.isLate).length}</p>
         </div>
         <div className="bg-white p-6 rounded-3xl border border-zinc-100 shadow-sm">
           <div className="flex items-center gap-3 mb-2">
@@ -204,7 +206,7 @@ export default function Attendance() {
             </div>
             <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Completed Shifts</span>
           </div>
-          <p className="text-2xl font-black text-zinc-900">{records.filter(r => r.checkOut).length}</p>
+          <p className="text-2xl font-black text-zinc-900">{filteredRecords.filter(r => r.checkOut).length}</p>
         </div>
       </div>
 
@@ -228,6 +230,23 @@ export default function Attendance() {
           >
             {branches.map(b => <option key={b} value={b}>{b}</option>)}
           </select>
+          <div className="relative">
+            <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none" size={18} />
+            <input 
+              type="date" 
+              value={selectedDate}
+              onChange={(e) => setSelectedDate(e.target.value)}
+              className="pl-12 pr-4 py-3 bg-zinc-50 border border-zinc-100 rounded-2xl text-sm font-bold text-zinc-600 outline-none focus:ring-2 focus:ring-orange-500"
+            />
+            {selectedDate && (
+              <button 
+                onClick={() => setSelectedDate('')}
+                className="ml-2 text-xs font-bold text-zinc-400 hover:text-red-500 transition-colors"
+              >
+                Clear
+              </button>
+            )}
+          </div>
         </div>
       )}
 
