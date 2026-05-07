@@ -25,7 +25,13 @@ export function mapProfile(data: any): UserProfile {
     performanceScore: Number(data.performance_score),
     leaveQuotas: data.leave_quotas,
     usedLeaves: data.used_leaves,
-    sortOrder: data.sort_order
+    sortOrder: data.sort_order,
+    bankName: data.bank_name,
+    bankBranch: data.bank_branch,
+    accountNo: data.account_no,
+    accountHolderName: data.account_holder_name,
+    nic: data.nic,
+    nickname: data.nickname
   };
 }
 
@@ -74,7 +80,13 @@ export async function saveEmployee(emp: UserProfile): Promise<void> {
     performance_score: data.performanceScore,
     leave_quotas: data.leaveQuotas,
     used_leaves: data.usedLeaves,
-    sort_order: (data as any).sortOrder
+    sort_order: (data as any).sortOrder,
+    bank_name: data.bankName || null,
+    bank_branch: data.bankBranch || null,
+    account_no: data.accountNo || null,
+    account_holder_name: data.accountHolderName || null,
+    nic: data.nic || null,
+    nickname: data.nickname || null
   };
 
   const { error } = await supabase.from('profiles').update(payload).eq('id', uid);
@@ -151,7 +163,13 @@ export async function registerFullEmployee(emp: UserProfile, password?: string):
     performance_score: emp.performanceScore,
     leave_quotas: emp.leaveQuotas,
     used_leaves: emp.usedLeaves,
-    sort_order: nextSortOrder
+    sort_order: nextSortOrder,
+    bank_name: emp.bankName || null,
+    bank_branch: emp.bankBranch || null,
+    account_no: emp.accountNo || null,
+    account_holder_name: emp.accountHolderName || null,
+    nic: emp.nic || null,
+    nickname: emp.nickname || null
   });
 
   if (profileError) throw profileError;

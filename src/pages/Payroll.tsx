@@ -332,6 +332,7 @@ export default function Payroll() {
         </div>
       </div>
 
+
       {/* Generation Modal */}
       {showGenModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
@@ -408,7 +409,7 @@ export default function Payroll() {
       )}
 
       {/* Stats Summary */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="bg-white p-6 rounded-3xl border border-zinc-100 shadow-sm">
           <div className="flex items-center gap-3 mb-2">
             <div className="w-8 h-8 rounded-lg bg-orange-100 flex items-center justify-center text-orange-600">

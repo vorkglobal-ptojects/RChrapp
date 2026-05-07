@@ -35,6 +35,12 @@ export interface UserProfile {
     short: number;
   };
   sortOrder?: number;
+  bankName?: string;
+  bankBranch?: string;
+  accountNo?: string;
+  accountHolderName?: string;
+  nic?: string;
+  nickname?: string;
 }
 
 export interface AttendanceRecord {
