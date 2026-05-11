@@ -289,7 +289,7 @@ export default function Leaves() {
             className="w-full pl-12 pr-4 py-3 bg-zinc-50 border border-zinc-100 rounded-2xl text-sm focus:ring-2 focus:ring-zinc-900 outline-none transition-all"
           />
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           {['All', 'Pending', 'Approved', 'Rejected', 'Unapproved'].map((f) => (
             <button
               key={f}

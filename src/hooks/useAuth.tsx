@@ -54,6 +54,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           performanceScore: Number(data.performance_score),
           leaveQuotas: data.leave_quotas || { annual: 14, sick: 7, casual: 7, short: 8 },
           usedLeaves: data.used_leaves || { annual: 0, sick: 0, casual: 0, short: 0 },
+          sortOrder: data.sort_order,
+          bankName: data.bank_name,
+          bankBranch: data.bank_branch,
+          accountNo: data.account_no,
+          accountHolderName: data.account_holder_name,
+          nic: data.nic,
+          nickname: data.nickname,
         };
         setUser(profile);
       }
