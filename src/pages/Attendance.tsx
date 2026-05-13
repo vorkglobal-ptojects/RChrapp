@@ -19,6 +19,29 @@ export default function Attendance() {
   const [search, setSearch] = useState('');
   const [filterBranch, setFilterBranch] = useState('All');
   const [loading, setLoading] = useState(true);
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 10000); // Update every 10s for better responsiveness
+    return () => clearInterval(timer);
+  }, []);
+
+  const todayStr = new Date().toISOString().split('T')[0];
+  const activeRecord = records.find(r => r.userId === user?.uid && r.date === todayStr && !r.checkOut);
+  
+  let checkoutLocked = false;
+  let remainingMinutes = 0;
+  
+  if (activeRecord) {
+    const checkInTime = new Date(activeRecord.checkIn).getTime();
+    const elapsedMs = currentTime.getTime() - checkInTime;
+    const lockDurationMs = 60 * 60 * 1000;
+    
+    if (elapsedMs < lockDurationMs) {
+      checkoutLocked = true;
+      remainingMinutes = Math.ceil((lockDurationMs - elapsedMs) / (1000 * 60));
+    }
+  }
 
   const loadData = async () => {
     if (!user) return;
@@ -151,7 +174,9 @@ export default function Attendance() {
                 Check In
               </button>
               <button 
+                disabled={checkoutLocked}
                 onClick={async () => {
+                  if (checkoutLocked) return;
                   try {
                     await attendanceService.checkOut(user.uid);
                     toast.success('Checked out!');
@@ -160,10 +185,15 @@ export default function Attendance() {
                     toast.error('No active shift found');
                   }
                 }}
-                className="bg-zinc-900 text-white px-6 py-3 rounded-2xl font-bold flex items-center gap-2 hover:bg-zinc-800 transition-all shadow-lg"
+                className={cn(
+                  "px-6 py-3 rounded-2xl font-bold flex items-center gap-2 transition-all shadow-lg",
+                  checkoutLocked 
+                    ? "bg-zinc-100 text-zinc-400 cursor-not-allowed shadow-none border border-zinc-200" 
+                    : "bg-zinc-900 text-white hover:bg-zinc-800"
+                )}
               >
                 <ArrowDownRight size={18} />
-                Check Out
+                {checkoutLocked ? `Locked (${remainingMinutes}m)` : 'Check Out'}
               </button>
             </div>
           )}
