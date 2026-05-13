@@ -1,9 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { 
-  User, Mail, MapPin, Calendar, 
-  Briefcase, Shield, LogOut, Edit3,
-  Phone, Globe, Github, Linkedin, Save, X,
-  Camera, CheckCircle2, UserCircle2
+  User, Mail, Shield, LogOut, Edit3,
+  Phone, X, Camera, CreditCard, Award, MapPin
 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { cn, formatDate } from '../lib/utils';
@@ -17,11 +15,15 @@ export default function Profile() {
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
+    nickname: '',
+    nic: '',
     email: '',
     phone: '',
     photoUrl: '',
-    department: '',
-    status: '',
+    bankName: '',
+    bankBranch: '',
+    accountNo: '',
+    accountHolderName: '',
   });
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
@@ -32,11 +34,15 @@ export default function Profile() {
       setFormData({
         firstName: nameParts[0] || '',
         lastName: nameParts.slice(1).join(' ') || '',
+        nickname: user.nickname || '',
+        nic: user.nic || '',
         email: user.email || '',
         phone: user.phone || '',
         photoUrl: user.photoUrl || '',
-        department: user.department || 'Operations',
-        status: user.status || 'Available',
+        bankName: user.bankName || '',
+        bankBranch: user.bankBranch || '',
+        accountNo: user.accountNo || '',
+        accountHolderName: user.accountHolderName || user.name || '',
       });
     }
   }, [isEditing, user]);
@@ -53,7 +59,7 @@ export default function Profile() {
       setSelectedFile(file);
       const reader = new FileReader();
       reader.onloadend = () => {
-        setFormData({ ...formData, photoUrl: reader.result as string });
+        setFormData(prev => ({ ...prev, photoUrl: reader.result as string }));
       };
       reader.readAsDataURL(file);
     }
@@ -61,25 +67,39 @@ export default function Profile() {
 
   const handleSave = async () => {
     const fullName = `${formData.firstName} ${formData.lastName}`.trim();
+    if (!fullName) {
+      return toast.error('First Name and Last Name are required.');
+    }
+
+    // If eligible for bank details, validate if any field is filled out
+    const isEligibleBank = user.role === 'employee' || user.role === 'hr';
+    if (isEligibleBank && (formData.bankName.trim() || formData.accountNo.trim())) {
+      if (!formData.bankName.trim() || !formData.accountNo.trim()) {
+        return toast.error('Both Bank Name and Account Number are required if updating bank details.');
+      }
+    }
     
     try {
+      toast.loading('Saving profile changes...');
       let finalPhotoUrl = formData.photoUrl || user.photoUrl || '';
 
-      // 1. If a new file was selected, upload it to Supabase Storage first
+      // 1. Upload photo if selected
       if (selectedFile && user.uid) {
-        toast.loading('Uploading photo...');
         finalPhotoUrl = await userService.uploadAvatar(user.uid, selectedFile);
       }
 
-      // 2. Prepare the updated user profile
+      // 2. Prepare payload
       const updatedUser = {
         ...user,
-        name: fullName || user.name,
-        email: user.email,
-        phone: formData.phone || user.phone || '',
+        name: fullName,
+        nickname: formData.nickname.trim(),
+        nic: formData.nic.trim(),
+        phone: formData.phone.trim(),
         photoUrl: finalPhotoUrl,
-        department: formData.department || user.department || 'Operations',
-        status: (formData.status as any) || user.status || 'Available',
+        bankName: isEligibleBank ? formData.bankName.trim() : user.bankName,
+        bankBranch: isEligibleBank ? formData.bankBranch.trim() : user.bankBranch,
+        accountNo: isEligibleBank ? formData.accountNo.trim() : user.accountNo,
+        accountHolderName: isEligibleBank ? (formData.accountHolderName.trim() || fullName) : user.accountHolderName,
       };
       
       await userService.saveEmployee(updatedUser);
@@ -87,10 +107,11 @@ export default function Profile() {
       setIsEditing(false);
       setSelectedFile(null);
       toast.dismiss();
-      toast.success('Profile updated successfully!');
+      toast.success('Profile details updated successfully!');
     } catch (err) {
       console.error('Profile Update Error:', err);
-      toast.error('Failed to update profile sync');
+      toast.dismiss();
+      toast.error('Failed to save profile changes');
     }
   };
 
@@ -102,8 +123,12 @@ export default function Profile() {
     'Meeting': 'bg-purple-500',
   };
 
+  const nameParts = user.name.split(' ');
+  const firstName = nameParts[0] || '';
+  const lastName = nameParts.slice(1).join(' ') || '';
+
   return (
-    <div className="space-y-8 pb-12 relative">
+    <div className="space-y-8 pb-12 relative animate-in fade-in duration-200">
       {/* Header Section */}
       <div className="flex items-center justify-between">
         <div>
@@ -138,7 +163,11 @@ export default function Profile() {
             </div>
             
             <h2 className="text-2xl font-black text-zinc-900 leading-tight">{user.name}</h2>
-            <div className="flex items-center justify-center gap-2 mb-8">
+            {user.nickname && (
+              <p className="text-sm text-zinc-400 font-bold uppercase tracking-widest mt-1">"{user.nickname}"</p>
+            )}
+
+            <div className="flex items-center justify-center gap-2 my-6">
               <span className="px-3 py-1 bg-zinc-100 rounded-full text-[10px] font-bold text-zinc-500 uppercase tracking-widest border border-zinc-200">
                 {user.status}
               </span>
@@ -147,7 +176,7 @@ export default function Profile() {
             <div className="space-y-3">
               <button className="w-full py-4 bg-zinc-50 text-zinc-600 rounded-2xl font-bold flex items-center justify-center gap-2 hover:bg-zinc-100 transition-all border border-zinc-100">
                 <Shield size={18} />
-                Security
+                Security Settings
               </button>
               <button 
                 onClick={logout}
@@ -158,37 +187,11 @@ export default function Profile() {
               </button>
             </div>
           </div>
-
-          <div className="bg-zinc-900 p-8 rounded-[2.5rem] text-white shadow-xl shadow-zinc-200">
-            <h3 className="font-black text-lg mb-6 flex items-center gap-2">
-              <Briefcase size={20} className="text-blue-400" />
-              Work Info
-            </h3>
-            <div className="space-y-6">
-              <div className="flex items-center gap-4">
-                <div>
-                  <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Department</p>
-                  <p className="font-bold text-sm text-zinc-200">{user.department || 'Operations'}</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-4">
-                <div>
-                  <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Joined Date</p>
-                  <p className="font-bold text-sm text-zinc-200">{formatDate(user.joinDate)}</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-4">
-                <div>
-                  <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Branch Location</p>
-                  <p className="font-bold text-sm text-zinc-200">{user.branch} Sri Lanka</p>
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
 
         {/* Right Column: Information Grid */}
         <div className="lg:col-span-2 space-y-8">
+          {/* Personal & Identity Details Card */}
           <div className="bg-white p-8 rounded-[2.5rem] border border-zinc-100 shadow-sm min-h-[400px]">
             <h3 className="text-xl font-black text-zinc-900 mb-8 flex items-center gap-2">
               <User size={22} className="text-blue-500" />
@@ -196,9 +199,27 @@ export default function Profile() {
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <div className="space-y-2">
-                <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest ml-1">Official Name</label>
+                <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest ml-1">First Name</label>
                 <div className="px-5 py-4 bg-zinc-50/50 rounded-2xl text-sm font-bold text-zinc-700 border border-zinc-100">
-                  {user.name}
+                  {firstName || '—'}
+                </div>
+              </div>
+              <div className="space-y-2">
+                <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest ml-1">Last Name</label>
+                <div className="px-5 py-4 bg-zinc-50/50 rounded-2xl text-sm font-bold text-zinc-700 border border-zinc-100">
+                  {lastName || '—'}
+                </div>
+              </div>
+              <div className="space-y-2">
+                <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest ml-1">Nick Name</label>
+                <div className="px-5 py-4 bg-zinc-50/50 rounded-2xl text-sm font-bold text-zinc-700 border border-zinc-100">
+                  {user.nickname || '—'}
+                </div>
+              </div>
+              <div className="space-y-2">
+                <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest ml-1">NIC Number</label>
+                <div className="px-5 py-4 bg-zinc-50/50 rounded-2xl text-sm font-bold text-zinc-700 border border-zinc-100 font-mono">
+                  {user.nic || '—'}
                 </div>
               </div>
               <div className="space-y-2">
@@ -210,119 +231,268 @@ export default function Profile() {
               <div className="space-y-2">
                 <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest ml-1">Mobile Contact</label>
                 <div className="px-5 py-4 bg-zinc-50/50 rounded-2xl text-sm font-bold text-zinc-700 border border-zinc-100">
-                  {user.phone || 'Not set'}
+                  {user.phone || '—'}
                 </div>
               </div>
               <div className="space-y-2">
-                <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest ml-1">Access Level</label>
-                <div className="px-5 py-4 bg-zinc-50/50 rounded-2xl text-sm font-bold text-blue-600 border border-blue-50 capitalize">
+                <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest ml-1">Access Role</label>
+                <div className="px-5 py-4 bg-zinc-50/50 rounded-2xl text-sm font-bold text-blue-600 border border-blue-50 capitalize flex items-center gap-1.5">
+                  <Award size={14} />
                   {user.role}
+                </div>
+              </div>
+              <div className="space-y-2">
+                <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest ml-1">Workspace Allocation</label>
+                <div className="px-5 py-4 bg-zinc-50/50 rounded-2xl text-sm font-bold text-zinc-700 border border-zinc-100 flex items-center gap-1.5">
+                  <MapPin size={14} className="text-zinc-400" />
+                  {user.branch || 'Colombo'} • {user.department || 'Operations'}
                 </div>
               </div>
             </div>
           </div>
+
+          {/* Bank Account Details Card (Only for Employees & HR) */}
+          {(user.role === 'employee' || user.role === 'hr') && (
+            <div className="bg-white p-8 rounded-[2.5rem] border border-zinc-100 shadow-sm relative overflow-hidden">
+              <div className="flex items-center justify-between mb-8">
+                <h3 className="text-xl font-black text-zinc-900 flex items-center gap-2">
+                  <CreditCard size={22} className="text-purple-500" />
+                  Bank Account Details
+                </h3>
+                <span className="text-[9px] font-black tracking-widest uppercase px-3 py-1 bg-purple-50 text-purple-600 border border-purple-100 rounded-full">
+                  Verified Acc
+                </span>
+              </div>
+
+              {user.bankName || user.accountNo ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest ml-1">Bank Name</label>
+                    <div className="px-5 py-4 bg-zinc-50/50 rounded-2xl text-sm font-bold text-zinc-700 border border-zinc-100">
+                      {user.bankName}
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest ml-1">Branch Name</label>
+                    <div className="px-5 py-4 bg-zinc-50/50 rounded-2xl text-sm font-bold text-zinc-700 border border-zinc-100">
+                      {user.bankBranch || '—'}
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest ml-1">Account Number</label>
+                    <div className="px-5 py-4 bg-zinc-50/50 rounded-2xl text-sm font-bold text-zinc-700 border border-zinc-100 font-mono tracking-wider">
+                      {user.accountNo}
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest ml-1">Account Holder Name</label>
+                    <div className="px-5 py-4 bg-zinc-50/50 rounded-2xl text-sm font-bold text-zinc-700 border border-zinc-100">
+                      {user.accountHolderName || user.name}
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="py-8 text-center bg-zinc-50/50 border border-dashed border-zinc-200 rounded-[2rem] flex flex-col items-center justify-center gap-3">
+                  <div className="w-12 h-12 rounded-2xl bg-purple-50 flex items-center justify-center text-purple-400">
+                    <CreditCard size={24} />
+                  </div>
+                  <div>
+                    <p className="font-bold text-zinc-700 text-sm">No bank account details added</p>
+                    <p className="text-xs text-zinc-400 mt-0.5">Please update your profile to configure your bank account details.</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
-      {/* 🚀 Edit Profile Modal (Matches Screenshot) */}
+      {/* 🚀 Single, Unified Edit Profile Modal */}
       {isEditing && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-900/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white w-full max-w-lg rounded-[2.5rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 relative">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-900/60 backdrop-blur-sm animate-in fade-in duration-200 overflow-y-auto">
+          <div className="bg-white w-full max-w-2xl rounded-[2.5rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 relative my-8">
             {/* Modal Header */}
-            <div className="p-8 pb-0 flex items-start justify-between">
+            <div className="p-8 pb-4 flex items-start justify-between border-b border-zinc-100">
               <div>
                 <h2 className="text-xl font-black text-zinc-900 flex items-center gap-2">
-                  <Edit3 size={20} className="text-blue-600" />
-                  Edit Profile
+                  <Edit3 size={20} className="text-orange-500" />
+                  Edit Profile Information
                 </h2>
-                <p className="text-sm text-zinc-500 font-medium mt-1">Update your personal details. Changes are saved immediately.</p>
+                <p className="text-xs text-zinc-500 font-medium mt-1">Modify your identity and bank details. Click save to submit.</p>
               </div>
               <button onClick={() => setIsEditing(false)} className="p-2 hover:bg-zinc-50 rounded-xl transition-all text-zinc-400">
                 <X size={20} />
               </button>
             </div>
 
-            {/* Avatar Picker Section */}
-            <div className="px-8 py-10 flex flex-col items-center">
-              <div className="relative group">
-                <div className="w-24 h-24 rounded-full bg-orange-50 border-2 border-dashed border-orange-200 flex items-center justify-center overflow-hidden">
-                  {formData.photoUrl ? (
-                    <img src={formData.photoUrl} className="w-full h-full object-cover" />
-                  ) : (
-                    <span className="text-3xl font-black text-orange-600 uppercase">
-                      {formData.firstName.charAt(0)}{formData.lastName ? formData.lastName.charAt(0) : '?'}
-                    </span>
-                  )}
+            <div className="max-h-[70vh] overflow-y-auto p-8 space-y-8">
+              {/* Avatar Picker Section */}
+              <div className="flex flex-col items-center pb-4">
+                <div className="relative group">
+                  <div className="w-24 h-24 rounded-[1.8rem] bg-orange-50 border-2 border-dashed border-orange-200 flex items-center justify-center overflow-hidden">
+                    {formData.photoUrl ? (
+                      <img src={formData.photoUrl} className="w-full h-full object-cover" />
+                    ) : (
+                      <span className="text-3xl font-black text-orange-600 uppercase">
+                        {formData.firstName.charAt(0)}{formData.lastName ? formData.lastName.charAt(0) : '?'}
+                      </span>
+                    )}
+                  </div>
+                  <button 
+                    onClick={handlePhotoClick}
+                    className="absolute bottom-0 right-0 p-2 bg-orange-500 text-white rounded-full shadow-lg hover:bg-orange-600 transition-all border-4 border-white"
+                  >
+                    <Camera size={14} />
+                  </button>
                 </div>
-                <button 
-                  onClick={handlePhotoClick}
-                  className="absolute bottom-0 right-0 p-2 bg-orange-500 text-white rounded-full shadow-lg hover:bg-orange-600 transition-all border-4 border-white"
-                >
-                  <Camera size={14} />
-                </button>
-              </div>
-              <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mt-4">Click the camera icon to upload a new photo</p>
-              <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept="image/*" />
-            </div>
-
-            {/* Form Fields */}
-            <div className="px-8 space-y-6">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-[10px] font-bold text-zinc-900 uppercase tracking-widest ml-1">First Name</label>
-                  <input 
-                    type="text"
-                    value={formData.firstName}
-                    onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                    className="w-full px-5 py-4 bg-zinc-50 rounded-2xl text-sm font-bold text-zinc-700 border border-zinc-100 focus:ring-2 focus:ring-orange-500 outline-none transition-all placeholder:text-zinc-300"
-                    placeholder="First name"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-bold text-zinc-900 uppercase tracking-widest ml-1">Last Name</label>
-                  <input 
-                    type="text"
-                    value={formData.lastName}
-                    onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-                    className="w-full px-5 py-4 bg-zinc-50 rounded-2xl text-sm font-bold text-zinc-700 border border-zinc-100 focus:ring-2 focus:ring-orange-500 outline-none transition-all placeholder:text-zinc-300"
-                    placeholder="Last name"
-                  />
-                </div>
+                <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mt-4">Upload avatar image</p>
+                <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept="image/*" />
               </div>
 
-              <div className="space-y-2">
-                <label className="text-[10px] font-bold text-zinc-900 uppercase tracking-widest ml-1">Email Address</label>
-                <input 
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="w-full px-5 py-4 bg-zinc-50 rounded-2xl text-sm font-bold text-zinc-700 border border-zinc-100 focus:ring-2 focus:ring-orange-500 outline-none transition-all"
-                />
+              {/* SECTION 1: Personal Details */}
+              <div className="space-y-6">
+                <h4 className="text-xs font-black uppercase text-zinc-400 tracking-widest border-b border-zinc-100 pb-2 flex items-center gap-2">
+                  <User size={14} className="text-blue-500" />
+                  Personal Information
+                </h4>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-zinc-700 uppercase tracking-widest ml-1">First Name *</label>
+                    <input 
+                      type="text"
+                      value={formData.firstName}
+                      onChange={(e) => setFormData(prev => ({ ...prev, firstName: e.target.value }))}
+                      className="w-full px-5 py-3.5 bg-zinc-50 rounded-2xl text-sm font-bold text-zinc-700 border border-zinc-100 focus:ring-2 focus:ring-orange-500 outline-none transition-all placeholder:text-zinc-300"
+                      placeholder="e.g. John"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-zinc-700 uppercase tracking-widest ml-1">Last Name *</label>
+                    <input 
+                      type="text"
+                      value={formData.lastName}
+                      onChange={(e) => setFormData(prev => ({ ...prev, lastName: e.target.value }))}
+                      className="w-full px-5 py-3.5 bg-zinc-50 rounded-2xl text-sm font-bold text-zinc-700 border border-zinc-100 focus:ring-2 focus:ring-orange-500 outline-none transition-all placeholder:text-zinc-300"
+                      placeholder="e.g. Doe"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-zinc-700 uppercase tracking-widest ml-1">Nick Name</label>
+                    <input 
+                      type="text"
+                      value={formData.nickname}
+                      onChange={(e) => setFormData(prev => ({ ...prev, nickname: e.target.value }))}
+                      className="w-full px-5 py-3.5 bg-zinc-50 rounded-2xl text-sm font-bold text-zinc-700 border border-zinc-100 focus:ring-2 focus:ring-orange-500 outline-none transition-all placeholder:text-zinc-300"
+                      placeholder="e.g. Johnny"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-zinc-700 uppercase tracking-widest ml-1">NIC Number</label>
+                    <input 
+                      type="text"
+                      value={formData.nic}
+                      onChange={(e) => setFormData(prev => ({ ...prev, nic: e.target.value }))}
+                      className="w-full px-5 py-3.5 bg-zinc-50 rounded-2xl text-sm font-bold text-zinc-700 border border-zinc-100 focus:ring-2 focus:ring-orange-500 outline-none transition-all placeholder:text-zinc-300 font-mono"
+                      placeholder="e.g. 199512345V"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-zinc-700 uppercase tracking-widest ml-1">Email Address (Read Only)</label>
+                    <input 
+                      type="email"
+                      value={formData.email}
+                      disabled
+                      className="w-full px-5 py-3.5 bg-zinc-100 rounded-2xl text-sm font-bold text-zinc-400 border border-zinc-200 cursor-not-allowed"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-zinc-700 uppercase tracking-widest ml-1">Mobile Contact</label>
+                    <input 
+                      type="text"
+                      value={formData.phone}
+                      onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
+                      className="w-full px-5 py-3.5 bg-zinc-50 rounded-2xl text-sm font-bold text-zinc-700 border border-zinc-100 focus:ring-2 focus:ring-orange-500 outline-none transition-all"
+                      placeholder="e.g. 077 123 4567"
+                    />
+                  </div>
+                </div>
               </div>
 
-              <div className="space-y-2">
-                <label className="text-[10px] font-bold text-zinc-900 uppercase tracking-widest ml-1">Phone Number</label>
-                <input 
-                  type="text"
-                  value={formData.phone}
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  className="w-full px-5 py-4 bg-zinc-50 rounded-2xl text-sm font-bold text-zinc-700 border border-zinc-100 focus:ring-2 focus:ring-orange-500 outline-none transition-all"
-                  placeholder="077 123 4567"
-                />
-              </div>
+              {/* SECTION 2: Bank Details (Only for Employees & HR) */}
+              {(user.role === 'employee' || user.role === 'hr') && (
+                <div className="space-y-6 pt-4">
+                  <h4 className="text-xs font-black uppercase text-zinc-400 tracking-widest border-b border-zinc-100 pb-2 flex items-center gap-2">
+                    <CreditCard size={14} className="text-purple-500" />
+                    Bank Account Details
+                  </h4>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold text-zinc-700 uppercase tracking-widest ml-1">Bank Name</label>
+                      <input 
+                        type="text"
+                        value={formData.bankName}
+                        onChange={(e) => setFormData(prev => ({ ...prev, bankName: e.target.value }))}
+                        className="w-full px-5 py-3.5 bg-zinc-50 rounded-2xl text-sm font-bold text-zinc-700 border border-zinc-100 focus:ring-2 focus:ring-purple-500 outline-none transition-all placeholder:text-zinc-300"
+                        placeholder="e.g. Commercial Bank, BOC"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold text-zinc-700 uppercase tracking-widest ml-1">Branch Name</label>
+                      <input 
+                        type="text"
+                        value={formData.bankBranch}
+                        onChange={(e) => setFormData(prev => ({ ...prev, bankBranch: e.target.value }))}
+                        className="w-full px-5 py-3.5 bg-zinc-50 rounded-2xl text-sm font-bold text-zinc-700 border border-zinc-100 focus:ring-2 focus:ring-purple-500 outline-none transition-all placeholder:text-zinc-300"
+                        placeholder="e.g. Borella, Kollupitiya"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold text-zinc-700 uppercase tracking-widest ml-1">Account Number</label>
+                      <input 
+                        type="text"
+                        value={formData.accountNo}
+                        onChange={(e) => setFormData(prev => ({ ...prev, accountNo: e.target.value }))}
+                        className="w-full px-5 py-3.5 bg-zinc-50 rounded-2xl text-sm font-bold text-zinc-700 border border-zinc-100 focus:ring-2 focus:ring-purple-500 outline-none transition-all placeholder:text-zinc-300 font-mono"
+                        placeholder="e.g. 1040082341"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold text-zinc-700 uppercase tracking-widest ml-1">Account Holder Name</label>
+                      <input 
+                        type="text"
+                        value={formData.accountHolderName}
+                        onChange={(e) => setFormData(prev => ({ ...prev, accountHolderName: e.target.value }))}
+                        className="w-full px-5 py-3.5 bg-zinc-50 rounded-2xl text-sm font-bold text-zinc-700 border border-zinc-100 focus:ring-2 focus:ring-purple-500 outline-none transition-all placeholder:text-zinc-300"
+                        placeholder="e.g. J. A. D. S. Perera"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Modal Actions */}
-            <div className="p-8 flex items-center justify-end gap-3 mt-4">
+            <div className="p-8 border-t border-zinc-100 flex items-center justify-end gap-3 bg-zinc-50/50">
               <button 
                 onClick={() => setIsEditing(false)}
-                className="px-6 py-3 text-sm font-bold text-zinc-500 hover:text-zinc-900 transition-all"
+                className="px-6 py-3.5 text-sm font-bold text-zinc-500 hover:text-zinc-900 transition-all"
               >
                 Cancel
               </button>
               <button 
                 onClick={handleSave}
-                className="px-8 py-3 bg-orange-500 text-white rounded-xl font-bold hover:bg-orange-600 transition-all shadow-lg shadow-orange-100"
+                className="px-8 py-3.5 bg-orange-500 text-white rounded-2xl font-bold hover:bg-orange-600 transition-all shadow-lg shadow-orange-100 active:scale-95"
               >
                 Save Changes
               </button>

@@ -14,7 +14,7 @@ import { motion, AnimatePresence } from 'motion/react';
 export default function Leaves() {
   const { user } = useAuth();
   const [leaves, setLeaves] = useState<LeaveRequest[]>([]);
-  const [filter, setFilter] = useState<'All' | 'Pending' | 'Approved' | 'Rejected'>('All');
+  const [filter, setFilter] = useState<'All' | 'Pending' | 'Approved' | 'Rejected' | 'Unapproved'>('All');
   const [search, setSearch] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -35,6 +35,12 @@ export default function Leaves() {
     setLoading(true);
     try {
       const isManagement = user.role === 'hr' || user.role === 'owner' || user.role === 'super';
+      
+      // Auto-reject expired requests before loading
+      if (isManagement) {
+        await leaveService.rejectExpiredLeaves();
+      }
+
       const data = await leaveService.getLeaves(isManagement ? undefined : user.uid);
       setLeaves(data || []);
     } catch (err) {
@@ -171,7 +177,15 @@ export default function Leaves() {
   };
 
   const filteredLeaves = leaves.filter(l => {
-    const matchesFilter = filter === 'All' || l.status === filter;
+    let matchesFilter = filter === 'All' || l.status === filter;
+    
+    // Handle "Unapproved" virtual status
+    if (filter === 'Unapproved') {
+      matchesFilter = l.status === 'Rejected' && !l.approvedBy;
+    } else if (filter === 'Rejected') {
+      matchesFilter = l.status === 'Rejected' && !!l.approvedBy;
+    }
+
     const matchesSearch = (l.userName || '').toLowerCase().includes(search.toLowerCase()) || 
                          (l.leaveType || '').toLowerCase().includes(search.toLowerCase());
     return matchesFilter && matchesSearch;
@@ -179,9 +193,15 @@ export default function Leaves() {
 
   const canApprove = (req: LeaveRequest) => {
     if (!user) return false;
-    if (user.role === 'owner') return req.userRole === 'super' || req.userRole === 'hr';
-    if (user.role === 'hr') return req.userRole === 'employee';
-    if (user.role === 'super') return req.userRole === 'employee';
+    const myRole = user.role;
+    const theirRole = req.userRole;
+
+    // Management (Owner, HR, Super) can approve Employees
+    if ((myRole === 'owner' || myRole === 'hr' || myRole === 'super') && theirRole === 'employee') return true;
+    
+    // Owners can approve HR and Super as well
+    if (myRole === 'owner' && (theirRole === 'hr' || theirRole === 'super')) return true;
+
     return false;
   };
 
@@ -269,8 +289,8 @@ export default function Leaves() {
             className="w-full pl-12 pr-4 py-3 bg-zinc-50 border border-zinc-100 rounded-2xl text-sm focus:ring-2 focus:ring-zinc-900 outline-none transition-all"
           />
         </div>
-        <div className="flex gap-2">
-          {['All', 'Pending', 'Approved', 'Rejected'].map((f) => (
+        <div className="flex flex-wrap gap-2">
+          {['All', 'Pending', 'Approved', 'Rejected', 'Unapproved'].map((f) => (
             <button
               key={f}
               onClick={() => setFilter(f as any)}
@@ -299,10 +319,14 @@ export default function Leaves() {
               key={req.id}
               className="bg-white p-6 rounded-4xl border border-zinc-100 shadow-sm hover:shadow-md transition-all flex flex-col md:flex-row md:items-center gap-6"
             >
-              <div className="flex items-center gap-4 min-w-[200px]">
-                <div className="w-12 h-12 rounded-2xl bg-zinc-100 flex items-center justify-center text-zinc-900 font-black text-xl shadow-inner border border-zinc-100">
-                  {req.userName?.charAt(0)}
-                </div>
+            <div className="flex items-center gap-4 min-w-[200px]">
+              <div className="w-12 h-12 rounded-2xl bg-zinc-100 flex items-center justify-center text-zinc-900 font-black text-xl shadow-inner border border-zinc-100 overflow-hidden">
+                {(req as any).userPhoto ? (
+                  <img src={(req as any).userPhoto} alt={req.userName} className="w-full h-full object-cover" />
+                ) : (
+                  req.userName?.charAt(0) || <User size={20} className="text-zinc-400" />
+                )}
+              </div>
                 <div>
                   <h3 className="font-bold text-zinc-900">{req.userName}</h3>
                   <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">{req.userRole}</p>
@@ -340,10 +364,11 @@ export default function Leaves() {
                   <div className={cn(
                     "px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border",
                     req.status === 'Approved' ? "bg-green-50 text-green-700 border-green-100" :
-                    req.status === 'Rejected' ? "bg-red-50 text-red-700 border-red-100" :
+                    req.status === 'Rejected' && req.approvedBy ? "bg-red-50 text-red-700 border-red-100" :
+                    req.status === 'Rejected' && !req.approvedBy ? "bg-zinc-50 text-zinc-700 border-zinc-100" :
                     "bg-amber-50 text-amber-700 border-amber-100"
                   )}>
-                    {req.status}
+                    {req.status === 'Rejected' && !req.approvedBy ? 'Unapproved' : req.status}
                   </div>
                   {req.imageUrl && (
                     <a 

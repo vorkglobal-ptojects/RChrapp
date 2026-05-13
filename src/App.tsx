@@ -14,6 +14,7 @@ import ManagePayroll from './pages/ManagePayroll';
 import Performance from './pages/Performance';
 import Calendar from './pages/Calendar';
 import Profile from './pages/Profile';
+import BankDetails from './pages/BankDetails';
 
 const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = useAuth();
@@ -65,6 +66,7 @@ function AppRoutes() {
       <Route path="/attendance" element={<PrivateRoute><Attendance /></PrivateRoute>} />
       <Route path="/leaves" element={<PrivateRoute><Leaves /></PrivateRoute>} />
       <Route path="/payroll" element={<PrivateRoute><Payroll /></PrivateRoute>} />
+      <Route path="/bank-details" element={<PrivateRoute>{(user?.role === 'super' || user?.role === 'hr') ? <BankDetails /> : <Navigate to="/" replace />}</PrivateRoute>} />
       <Route path="/manage-payroll" element={<PrivateRoute><ManagePayroll /></PrivateRoute>} />
       <Route path="/performance" element={<PrivateRoute><Performance /></PrivateRoute>} />
       <Route path="/calendar" element={<PrivateRoute><Calendar /></PrivateRoute>} />

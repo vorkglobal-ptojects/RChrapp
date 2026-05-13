@@ -31,6 +31,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
     { name: 'Attendance', icon: Clock, path: '/attendance', roles: ['super', 'owner', 'hr', 'employee'] },
     { name: 'Leave Requests', icon: FileText, path: '/leaves', roles: ['super', 'owner', 'hr', 'employee'] },
     { name: 'Payroll', icon: CreditCard, path: '/payroll', roles: ['super', 'owner', 'hr'] },
+    { name: 'Bank Details', icon: CreditCard, path: '/bank-details', roles: ['super', 'hr'] },
     { name: 'Manage Payroll', icon: Settings, path: '/manage-payroll', roles: ['super', 'hr'] },
     { name: 'Performance', icon: TrendingUp, path: '/performance', roles: ['super', 'owner', 'hr', 'employee'] },
     { name: 'Calendar', icon: Calendar, path: '/calendar', roles: ['super', 'owner', 'hr', 'employee'] },

@@ -249,6 +249,31 @@ export default function Dashboard() {
     }
   };
 
+  const handleAction = async (id: string, status: 'Approved' | 'Rejected') => {
+    if (!user) return;
+    try {
+      await leaveService.updateLeaveStatus(id, status, user.uid);
+      toast.success(`Leave request ${status.toLowerCase()}`);
+      loadData();
+    } catch (err) {
+      toast.error('Failed to update request');
+    }
+  };
+
+  const canApprove = (req: LeaveRequest) => {
+    if (!user) return false;
+    const myRole = user.role;
+    const theirRole = req.userRole;
+
+    // Management (Owner, HR, Super) can approve Employees
+    if ((myRole === 'owner' || myRole === 'hr' || myRole === 'super') && theirRole === 'employee') return true;
+    
+    // Owners can approve HR and Super as well
+    if (myRole === 'owner' && (theirRole === 'hr' || theirRole === 'super')) return true;
+
+    return false;
+  };
+
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -493,7 +518,7 @@ export default function Dashboard() {
                       data={user ? [
                         { 
                           name: 'Remaining', 
-                          value: Math.max(0, (Number(user.leaveQuotas.annual) || 14) - (Object.values(user.usedLeaves || {}) as number[]).reduce((a: number, b: any) => a + (Number(b) || 0), 0)), 
+                          value: Math.max(0, (Number(user.leaveQuotas?.annual) || 14) - (Object.values(user.usedLeaves || {}) as number[]).reduce((a: number, b: any) => a + (Number(b) || 0), 0)), 
                           color: '#f97316' 
                         },
                         { 
@@ -526,7 +551,7 @@ export default function Dashboard() {
                     <p className="text-2xl font-black text-zinc-900">
                       {(() => {
                         const totalUsed = (Object.values(user?.usedLeaves || {}) as number[]).reduce((a: number, b: any) => a + (Number(b) || 0), 0);
-                        const annual = Number(user?.leaveQuotas.annual) || 14;
+                        const annual = Number(user?.leaveQuotas?.annual) || 14;
                         return Math.floor(annual - totalUsed);
                       })()}
                     </p>
@@ -686,7 +711,9 @@ export default function Dashboard() {
           <h2 className="text-xl font-black text-zinc-900">Recent Leave Requests</h2>
           <button className="text-sm font-bold text-orange-500 hover:text-orange-600 transition-colors">View All</button>
         </div>
-        <div className="overflow-x-auto">
+
+        {/* Desktop View: Wide Table Layout */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-zinc-50/50">
@@ -694,12 +721,13 @@ export default function Dashboard() {
                 <th className="px-8 py-4 text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Duration</th>
                 <th className="px-8 py-4 text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Reason</th>
                 <th className="px-8 py-4 text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Status</th>
+                {isAdmin && <th className="px-8 py-4 text-[10px] font-bold text-zinc-400 uppercase tracking-widest text-right">Actions</th>}
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-50">
               {requests.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="px-8 py-10 text-center text-zinc-400 font-medium">No leave requests found</td>
+                  <td colSpan={isAdmin ? 5 : 4} className="px-8 py-10 text-center text-zinc-400 font-medium">No leave requests found</td>
                 </tr>
               ) : (
                 requests.slice(0, 5).map((request) => (
@@ -732,11 +760,94 @@ export default function Dashboard() {
                         {request.status}
                       </div>
                     </td>
+                    {isAdmin && (
+                      <td className="px-8 py-5 text-right">
+                        {request.status === 'Pending' && canApprove(request) ? (
+                          <div className="inline-flex gap-2">
+                            <button 
+                              onClick={() => handleAction(request.id!, 'Approved')}
+                              className="p-1.5 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-all shadow-sm"
+                              title="Approve"
+                            >
+                              <CheckCircle2 size={16} />
+                            </button>
+                            <button 
+                              onClick={() => handleAction(request.id!, 'Rejected')}
+                              className="p-1.5 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-all shadow-sm"
+                              title="Reject"
+                            >
+                              <XCircle size={16} />
+                            </button>
+                          </div>
+                        ) : (
+                          <span className="text-xs text-zinc-400 font-bold">—</span>
+                        )}
+                      </td>
+                    )}
                   </tr>
                 ))
               )}
             </tbody>
           </table>
+        </div>
+
+        {/* Mobile View: Premium Responsive Card List */}
+        <div className="block md:hidden divide-y divide-zinc-50">
+          {requests.length === 0 ? (
+            <div className="py-12 text-center text-zinc-400 font-medium">No leave requests found</div>
+          ) : (
+            requests.slice(0, 5).map((request) => (
+              <div key={request.id} className="p-6 space-y-4 hover:bg-zinc-50/50 transition-all">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center text-orange-600">
+                      <Briefcase size={18} />
+                    </div>
+                    <div>
+                      <p className="font-bold text-zinc-900 text-sm">{request.leaveType}</p>
+                      {isAdmin && <p className="text-[10px] font-black text-zinc-400 uppercase tracking-wider">{request.userName}</p>}
+                    </div>
+                  </div>
+                  <div className={cn(
+                    "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border",
+                    request.status === 'Approved' ? "bg-green-50 text-green-700 border-green-100" :
+                    request.status === 'Rejected' ? "bg-red-50 text-red-700 border-red-100" :
+                    "bg-amber-50 text-amber-700 border-amber-100"
+                  )}>
+                    {request.status}
+                  </div>
+                </div>
+
+                <div className="space-y-1 pl-1">
+                  <p className="text-xs font-bold text-zinc-700">
+                    Duration: <span className="text-zinc-900">{formatDate(request.startDate)} to {formatDate(request.endDate)}</span>
+                  </p>
+                  <p className="text-xs font-medium text-zinc-500 italic">
+                    "{request.reason || 'No reason provided'}"
+                  </p>
+                </div>
+
+                {isAdmin && request.status === 'Pending' && canApprove(request) && (
+                  <div className="flex gap-2 pt-2">
+                    <button 
+                      onClick={() => handleAction(request.id!, 'Approved')}
+                      className="flex-1 py-3 bg-green-500 text-white rounded-xl font-bold hover:bg-green-600 transition-all shadow-sm text-xs flex items-center justify-center gap-1.5"
+                    >
+                      <CheckCircle2 size={16} />
+                      Approve
+                    </button>
+                    <button 
+                      onClick={() => handleAction(request.id!, 'Rejected')}
+                      className="flex-1 py-3 bg-red-500 text-white rounded-xl font-bold hover:bg-red-600 transition-all shadow-sm text-xs flex items-center justify-center gap-1.5"
+                    >
+                      <XCircle size={16} />
+                      Reject
+                    </button>
+                  </div>
+                )}
+              </div>
+            ))
+          )}
         </div>
       </div>
 
