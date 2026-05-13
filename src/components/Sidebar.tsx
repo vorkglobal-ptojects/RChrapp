@@ -12,7 +12,8 @@ import {
   User,
   TrendingUp,
   Briefcase,
-  X
+  X,
+  Coins
 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { cn } from '../lib/utils';
@@ -30,6 +31,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
     { name: 'Employees', icon: Users, path: '/employees', roles: ['super', 'owner', 'hr'] },
     { name: 'Attendance', icon: Clock, path: '/attendance', roles: ['super', 'owner', 'hr', 'employee'] },
     { name: 'Leave Requests', icon: FileText, path: '/leaves', roles: ['super', 'owner', 'hr', 'employee'] },
+    { name: 'Advances', icon: Coins, path: '/advances', roles: ['super', 'owner', 'hr', 'employee'] },
     { name: 'Payroll', icon: CreditCard, path: '/payroll', roles: ['super', 'owner', 'hr'] },
     { name: 'Bank Details', icon: CreditCard, path: '/bank-details', roles: ['super', 'hr'] },
     { name: 'Manage Payroll', icon: Settings, path: '/manage-payroll', roles: ['super', 'hr'] },

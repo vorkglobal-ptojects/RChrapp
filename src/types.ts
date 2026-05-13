@@ -128,3 +128,19 @@ export interface PerformanceRecord {
   status: 'Draft' | 'Completed' | 'Self-Evaluated';
   createdAt: any;
 }
+
+export type AdvanceStatus = 'Pending' | 'Approved' | 'Rejected';
+
+export interface AdvanceRequest {
+  id?: string;
+  userId: string;
+  userName?: string;
+  userRole?: UserRole;
+  userPhoto?: string;
+  amount: number;
+  reason: string;
+  status: AdvanceStatus;
+  approvedBy?: string;
+  createdAt: string;
+  updatedAt?: string;
+}

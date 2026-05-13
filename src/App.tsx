@@ -9,6 +9,7 @@ import Dashboard from './pages/Dashboard';
 import Employees from './pages/Employees';
 import Attendance from './pages/Attendance';
 import Leaves from './pages/Leaves';
+import Advances from './pages/Advances';
 import Payroll from './pages/Payroll';
 import ManagePayroll from './pages/ManagePayroll';
 import Performance from './pages/Performance';
@@ -65,6 +66,7 @@ function AppRoutes() {
       <Route path="/employees" element={<PrivateRoute><Employees /></PrivateRoute>} />
       <Route path="/attendance" element={<PrivateRoute><Attendance /></PrivateRoute>} />
       <Route path="/leaves" element={<PrivateRoute><Leaves /></PrivateRoute>} />
+      <Route path="/advances" element={<PrivateRoute><Advances /></PrivateRoute>} />
       <Route path="/payroll" element={<PrivateRoute><Payroll /></PrivateRoute>} />
       <Route path="/bank-details" element={<PrivateRoute>{(user?.role === 'super' || user?.role === 'hr') ? <BankDetails /> : <Navigate to="/" replace />}</PrivateRoute>} />
       <Route path="/manage-payroll" element={<PrivateRoute><ManagePayroll /></PrivateRoute>} />

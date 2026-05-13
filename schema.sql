@@ -57,6 +57,18 @@ CREATE TABLE public.leave_requests (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
+-- 3.5. Create advance requests table
+CREATE TABLE public.advance_requests (
+  id BIGSERIAL PRIMARY KEY,
+  user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
+  amount NUMERIC(15, 2) NOT NULL,
+  reason TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'Pending' CHECK (status IN ('Pending', 'Approved', 'Rejected')),
+  approved_by UUID REFERENCES public.profiles(id),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
 -- 4. Create tasks table
 CREATE TABLE public.tasks (
   id BIGSERIAL PRIMARY KEY,
@@ -106,6 +118,7 @@ CREATE TABLE public.performance (
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.attendance ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.leave_requests ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.advance_requests ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.tasks ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.payroll ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.performance ENABLE ROW LEVEL SECURITY;
@@ -139,6 +152,13 @@ CREATE POLICY "Users insert own leave" ON public.leave_requests FOR INSERT WITH 
 CREATE POLICY "Users update own pending leave" ON public.leave_requests FOR UPDATE USING (auth.uid() = user_id AND status = 'Pending');
 CREATE POLICY "Users delete own pending leave" ON public.leave_requests FOR DELETE USING (auth.uid() = user_id AND status = 'Pending');
 CREATE POLICY "Management manage leaves" ON public.leave_requests FOR ALL USING (is_management());
+
+-- POLICIES: ADVANCE REQUESTS
+CREATE POLICY "Users view own advance requests" ON public.advance_requests FOR SELECT USING (auth.uid() = user_id OR is_management());
+CREATE POLICY "Users insert own advance request" ON public.advance_requests FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users update own pending advance request" ON public.advance_requests FOR UPDATE USING (auth.uid() = user_id AND status = 'Pending');
+CREATE POLICY "Users delete own pending advance request" ON public.advance_requests FOR DELETE USING (auth.uid() = user_id AND status = 'Pending');
+CREATE POLICY "Management manage advance requests" ON public.advance_requests FOR ALL USING (is_management());
 
 -- POLICIES: TASKS
 CREATE POLICY "Users manage own tasks" ON public.tasks FOR ALL USING (auth.uid() = user_id OR is_management());
