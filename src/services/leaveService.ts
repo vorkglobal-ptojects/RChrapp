@@ -100,8 +100,8 @@ export async function getMonthlyLeaveTotal(userId: string, month: number, year: 
 
   let totalDays = 0;
   for (const req of data || []) {
-    const startDate = new Date(req.start_date);
-    if (startDate.getMonth() === month && startDate.getFullYear() === year) {
+    const [reqYear, reqMonth] = req.start_date.split('-').map(Number);
+    if (reqMonth - 1 === month && reqYear === year) {
       totalDays += calculateLeaveDays(req.leave_type, req.start_date, req.end_date, req.start_time, req.end_time);
     }
   }

@@ -216,7 +216,8 @@ export default function Dashboard() {
 
     setSubmitting(true);
     let isQuotaExceeded = false;
-    const monthlyTotal = await leaveService.getMonthlyLeaveTotal(uid, start.getMonth(), start.getFullYear());
+    const [startYear, startMonth] = startDate.split('-').map(Number);
+    const monthlyTotal = await leaveService.getMonthlyLeaveTotal(uid, startMonth - 1, startYear);
     if (monthlyTotal + diffDays > 1.5) {
       const confirmExceed = window.confirm('Leave quota exceeded. Do you want to continue?');
       if (!confirmExceed) {
