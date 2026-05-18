@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { Briefcase, Mail, Lock, ChevronRight, Eye, EyeOff } from 'lucide-react';
 import { toast } from 'sonner';
+import Logo from '../components/Logo';
 
 export default function Login() {
   const { user, login } = useAuth();
@@ -39,9 +40,7 @@ export default function Login() {
         <div className="hidden lg:flex flex-col justify-between p-12 bg-gradient-to-br from-orange-500 to-orange-600 text-white relative overflow-hidden">
           <div className="relative z-10">
             <div className="flex items-center gap-3 mb-12">
-              <div className="w-12 h-12 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center">
-                <Briefcase size={28} />
-              </div>
+              <Logo size="lg" className="mb-4" />
               <h1 className="text-2xl font-black tracking-tight">HR PULSE</h1>
             </div>
             <h2 className="text-5xl font-black leading-tight mb-6">

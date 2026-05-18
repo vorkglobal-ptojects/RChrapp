@@ -21,6 +21,7 @@ import {
 
 import { useAuth } from '../hooks/useAuth';
 import { toast } from 'sonner';
+import Logo from '../components/Logo';
 
 export default function Dashboard() {
   const { user, uid } = useAuth();
@@ -59,7 +60,7 @@ export default function Dashboard() {
 
   const formatBalance = (totalDays: number) => {
     const d = Math.floor(totalDays);
-    const h = Math.round((totalDays - d) * 8);
+    const h = Number(((totalDays - d) * 8).toFixed(1));
     const parts = [];
     if (d > 0) parts.push(`${d} Day${d !== 1 ? 's' : ''}`);
     if (h > 0) parts.push(`${h} Hour${h !== 1 ? 's' : ''}`);
@@ -214,6 +215,16 @@ export default function Dashboard() {
     }
 
     setSubmitting(true);
+    let isQuotaExceeded = false;
+    const monthlyTotal = await leaveService.getMonthlyLeaveTotal(uid, start.getMonth(), start.getFullYear());
+    if (monthlyTotal + diffDays > 1.5) {
+      const confirmExceed = window.confirm('Leave quota exceeded. Do you want to continue?');
+      if (!confirmExceed) {
+        setSubmitting(false);
+        return;
+      }
+      isQuotaExceeded = true;
+    }
     try {
       const leaveData: any = {
         userId: uid,
@@ -226,6 +237,7 @@ export default function Dashboard() {
         startTime: leaveType === 'Short' ? startTime : null,
         endTime: leaveType === 'Short' ? endTime : null,
         status: 'Pending',
+        isQuotaExceeded,
         createdAt: new Date().toISOString(),
         imageUrl: leaveImage || null
       };
@@ -441,7 +453,7 @@ export default function Dashboard() {
                         const annual = Number(user?.leaveQuotas?.annual) || 14;
                         const remaining = annual - totalUsed;
                         const days = Math.floor(remaining);
-                        const hours = Math.round((remaining - days) * 8);
+                        const hours = Number(((remaining - days) * 8).toFixed(1));
                         return `${days}d ${hours}h`;
                       })()}
                     </p>
@@ -560,7 +572,7 @@ export default function Dashboard() {
                         const totalUsed = (Object.values(user?.usedLeaves || {}) as number[]).reduce((a: number, b: any) => a + (Number(b) || 0), 0);
                         const annual = Number(user?.leaveQuotas.annual) || 14;
                         const remaining = annual - totalUsed;
-                        const hours = Math.round((remaining - Math.floor(remaining)) * 8);
+                        const hours = Number(((remaining - Math.floor(remaining)) * 8).toFixed(1));
                         return `Days & ${hours}h`;
                       })()}
                     </p>
@@ -731,12 +743,10 @@ export default function Dashboard() {
                 </tr>
               ) : (
                 requests.slice(0, 5).map((request) => (
-                  <tr key={request.id} className="hover:bg-zinc-50/30 transition-colors">
+                  <tr key={request.id} className={cn("transition-colors", request.isQuotaExceeded ? "bg-red-50 hover:bg-red-100" : "hover:bg-zinc-50/30")}>
                     <td className="px-8 py-5">
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-orange-50 flex items-center justify-center text-orange-600">
-                          <Briefcase size={16} />
-                        </div>
+                        <Logo size="sm" />
                         <div>
                           <p className="font-bold text-zinc-900">{request.leaveType}</p>
                           {isAdmin && <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">{request.userName}</p>}
@@ -744,8 +754,13 @@ export default function Dashboard() {
                       </div>
                     </td>
                     <td className="px-8 py-5">
-                      <p className="text-sm font-bold text-zinc-700">{formatDate(request.startDate)}</p>
-                      <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">To {formatDate(request.endDate)}</p>
+                      <p className="text-sm font-bold text-zinc-700">
+                        {formatDate(request.startDate)}
+                        {request.startTime && ` • ${request.startTime} - ${request.endTime}`}
+                      </p>
+                      {request.startDate !== request.endDate && (
+                        <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">To {formatDate(request.endDate)}</p>
+                      )}
                     </td>
                     <td className="px-8 py-5">
                       <p className="text-sm text-zinc-500 max-w-xs truncate font-medium">{request.reason}</p>
@@ -797,12 +812,10 @@ export default function Dashboard() {
             <div className="py-12 text-center text-zinc-400 font-medium">No leave requests found</div>
           ) : (
             requests.slice(0, 5).map((request) => (
-              <div key={request.id} className="p-6 space-y-4 hover:bg-zinc-50/50 transition-all">
+              <div key={request.id} className={cn("p-6 space-y-4 transition-all", request.isQuotaExceeded ? "bg-red-50 hover:bg-red-100" : "hover:bg-zinc-50/50")}>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center text-orange-600">
-                      <Briefcase size={18} />
-                    </div>
+                    <Logo size="md" />
                     <div>
                       <p className="font-bold text-zinc-900 text-sm">{request.leaveType}</p>
                       {isAdmin && <p className="text-[10px] font-black text-zinc-400 uppercase tracking-wider">{request.userName}</p>}
@@ -820,7 +833,11 @@ export default function Dashboard() {
 
                 <div className="space-y-1 pl-1">
                   <p className="text-xs font-bold text-zinc-700">
-                    Duration: <span className="text-zinc-900">{formatDate(request.startDate)} to {formatDate(request.endDate)}</span>
+                    Duration: <span className="text-zinc-900">
+                      {formatDate(request.startDate)}
+                      {request.startTime && ` (${request.startTime} - ${request.endTime})`}
+                      {request.startDate !== request.endDate && ` to ${formatDate(request.endDate)}`}
+                    </span>
                   </p>
                   <p className="text-xs font-medium text-zinc-500 italic">
                     "{request.reason || 'No reason provided'}"

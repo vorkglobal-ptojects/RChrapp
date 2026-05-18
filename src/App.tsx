@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { Toaster } from 'sonner';
 import { AuthProvider, useAuth } from './hooks/useAuth';
 import Sidebar from './components/Sidebar';
+import Logo from './components/Logo';
 import { Menu } from 'lucide-react';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
@@ -44,7 +45,8 @@ const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
           >
             <Menu size={24} />
           </button>
-          <span className="ml-3 font-black text-zinc-900 tracking-tight">HR PULSE</span>
+            <Logo size="sm" />
+            <span className="ml-3 font-black text-zinc-900 tracking-tight">HR PULSE</span>
         </header>
         <main className="flex-1 p-4 md:p-8 lg:p-12 overflow-y-auto max-h-screen">
           <div className="max-w-7xl mx-auto">

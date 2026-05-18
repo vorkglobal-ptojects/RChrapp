@@ -51,7 +51,7 @@ CREATE TABLE public.leave_requests (
   reason TEXT,
   status TEXT NOT NULL DEFAULT 'Pending' CHECK (status IN ('Pending', 'Approved', 'Rejected')),
   approved_by UUID REFERENCES public.profiles(id),
-  is_urgent BOOLEAN DEFAULT FALSE,
+  is_quota_exceeded BOOLEAN DEFAULT FALSE,
   image_url TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL

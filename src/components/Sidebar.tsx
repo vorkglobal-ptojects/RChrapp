@@ -1,5 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
+import Logo from './Logo';
 import { 
   LayoutDashboard, 
   Users, 
@@ -58,9 +59,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
       )}>
         <div className="p-6 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-orange-500 rounded-xl flex items-center justify-center text-white shadow-lg shadow-orange-200">
-              <Briefcase size={24} />
-            </div>
+            <Logo size="md" />
             <h1 className="text-xl font-black tracking-tight text-zinc-900">HR PULSE</h1>
           </div>
           <button 

@@ -70,7 +70,7 @@ export interface LeaveRequest {
   status: LeaveStatus;
   approvedBy?: string;
   createdAt: any;
-  isUrgent?: boolean;
+  isQuotaExceeded?: boolean;
   imageUrl?: string;
   userPhoto?: string;
 }
