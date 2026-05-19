@@ -72,10 +72,10 @@ export default function Tasks() {
 
   const filteredTasks = tasks.filter(task => {
     const matchesSearch = task.title.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesFilter = 
-      filter === 'all' ? true : 
-      filter === 'active' ? !task.completed : 
-      task.completed;
+    const matchesFilter =
+      filter === 'all' ? true :
+        filter === 'active' ? !task.completed :
+          task.completed;
     return matchesSearch && matchesFilter;
   });
 
@@ -139,7 +139,7 @@ export default function Tasks() {
                 </span>
               </div>
               <div className="w-full h-2 bg-zinc-100 rounded-full overflow-hidden">
-                <motion.div 
+                <motion.div
                   initial={{ width: 0 }}
                   animate={{ width: `${tasks.length > 0 ? (tasks.filter(t => t.completed).length / tasks.length) * 100 : 0}%` }}
                   className="h-full bg-orange-500"
@@ -163,7 +163,7 @@ export default function Tasks() {
 
           <AnimatePresence mode="popLayout">
             {filteredTasks.length === 0 ? (
-              <motion.div 
+              <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 className="text-center py-20 bg-white rounded-4xl border border-zinc-100 shadow-sm"
@@ -186,7 +186,7 @@ export default function Tasks() {
                     task.completed ? "border-zinc-100 opacity-60" : "border-zinc-100 hover:border-orange-200"
                   )}
                 >
-                  <button 
+                  <button
                     onClick={() => toggleTask(task.id!, task.completed)}
                     className={cn(
                       "w-7 h-7 rounded-xl border-2 flex items-center justify-center transition-all",
@@ -206,7 +206,7 @@ export default function Tasks() {
                       Added {formatDate(task.createdAt)}
                     </p>
                   </div>
-                  <button 
+                  <button
                     onClick={() => deleteTask(task.id!)}
                     className="p-3 text-zinc-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all opacity-0 group-hover:opacity-100"
                   >

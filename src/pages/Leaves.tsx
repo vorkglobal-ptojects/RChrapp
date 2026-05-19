@@ -28,6 +28,8 @@ export default function Leaves() {
   const [endTime, setEndTime] = useState('11:00');
   const [reason, setReason] = useState('');
   const [leaveImage, setLeaveImage] = useState<string | null>(null);
+  const [showQuotaWarning, setShowQuotaWarning] = useState(false);
+  const [pendingSubmitData, setPendingSubmitData] = useState<any>(null);
   const [editingLeaveId, setEditingLeaveId] = useState<string | null>(null);
 
   const loadData = async () => {
@@ -86,33 +88,37 @@ export default function Leaves() {
     const [startYear, startMonth] = startDate.split('-').map(Number);
     const monthlyTotal = await leaveService.getMonthlyLeaveTotal(user.uid, startMonth - 1, startYear);
     if (monthlyTotal + diffDays > 1.5) {
-      const confirmExceed = window.confirm('Leave quota exceeded. Do you want to continue?');
-      if (!confirmExceed) {
-        setSubmitting(false);
-        return;
-      }
-      isQuotaExceeded = true;
+      setPendingSubmitData({ diffDays, leaveType, reason, startDate, endDate, startTime, endTime, editingLeaveId, isQuotaExceeded: true });
+      setShowQuotaWarning(true);
+      setSubmitting(false);
+      return;
     }
 
+    await proceedSubmit({ diffDays, leaveType, reason, startDate, endDate, startTime, endTime, editingLeaveId, isQuotaExceeded: false });
+  };
+
+  const proceedSubmit = async (data: any) => {
+    setSubmitting(true);
     try {
       const leaveData: any = {
-        userId: user.uid,
-        userName: user.name,
-        userRole: user.role,
-        leaveType,
-        reason,
-        startDate: startDate,
-        endDate: leaveType === 'Short' ? startDate : endDate,
-        startTime: leaveType === 'Short' ? startTime : null,
-        endTime: leaveType === 'Short' ? endTime : null,
+        userId: user!.uid,
+        userName: user!.name,
+        userRole: user!.role,
+        leaveType: data.leaveType,
+        reason: data.reason,
+        startDate: data.startDate,
+        endDate: data.leaveType === 'Short' ? data.startDate : data.endDate,
+        startTime: data.leaveType === 'Short' ? data.startTime : null,
+        endTime: data.leaveType === 'Short' ? data.endTime : null,
         status: 'Pending',
-        isQuotaExceeded,
+        isQuotaExceeded: data.isQuotaExceeded,
         createdAt: new Date().toISOString(),
       };
       if (leaveImage) leaveData.imageUrl = leaveImage;
 
-      if (editingLeaveId) {
-        await leaveService.submitLeave(leaveData); // submitLeave handles both new and update if logic is there, or I'll split it.
+      if (data.editingLeaveId) {
+        leaveData.id = data.editingLeaveId;
+        await leaveService.submitLeave(leaveData);
         toast.success('Leave request updated successfully!');
       } else {
         await leaveService.submitLeave(leaveData);
@@ -133,6 +139,8 @@ export default function Leaves() {
       toast.error(error.message || 'Failed to submit leave. Check your permissions.');
     } finally {
       setSubmitting(false);
+      setShowQuotaWarning(false);
+      setPendingSubmitData(null);
     }
   };
 
@@ -583,6 +591,51 @@ export default function Leaves() {
                   </button>
                 </div>
               </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* ⚠️ Quota Exceeded Warning Modal */}
+      <AnimatePresence>
+        {showQuotaWarning && (
+          <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => { setShowQuotaWarning(false); setPendingSubmitData(null); }}
+              className="absolute inset-0 bg-zinc-900/60 backdrop-blur-md"
+            />
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 20 }}
+              className="relative w-full max-w-md bg-white rounded-3xl shadow-2xl border border-zinc-100 overflow-hidden"
+            >
+              <div className="p-8 text-center">
+                <div className="w-16 h-16 bg-red-100 text-red-500 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <AlertCircle size={32} />
+                </div>
+                <h2 className="text-2xl font-black text-zinc-900 mb-2">Leave Quota Exceeded</h2>
+                <p className="text-zinc-500 font-medium mb-8">
+                  You are applying for leave that exceeds the monthly limit of 1.5 days. Do you want to continue?
+                </p>
+                <div className="flex gap-4">
+                  <button
+                    onClick={() => { setShowQuotaWarning(false); setPendingSubmitData(null); }}
+                    className="flex-1 px-6 py-4 rounded-2xl font-bold text-zinc-600 bg-zinc-100 hover:bg-zinc-200 transition-all"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={() => proceedSubmit(pendingSubmitData)}
+                    className="flex-1 px-6 py-4 rounded-2xl font-bold text-white bg-orange-500 hover:bg-orange-600 transition-all shadow-lg shadow-orange-100"
+                  >
+                    Yes, Continue
+                  </button>
+                </div>
+              </div>
             </motion.div>
           </div>
         )}

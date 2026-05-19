@@ -22,6 +22,7 @@ export async function getPayroll(userId?: string): Promise<PayrollRecord[]> {
     cover: Number(d.cover),
     intensive: Number(d.intensive),
     travelling: Number(d.travelling),
+    extraDays: d.extra_days ? Number(d.extra_days) : 0,
     netSalary: Number(d.net_salary),
     status: d.status,
     createdAt: d.created_at,
@@ -54,6 +55,7 @@ export async function generatePayroll(month: number, year: number): Promise<void
         cover: emp.cover || 0,
         intensive: emp.intensive || 0,
         travelling: emp.travelling || 0,
+        extra_days: emp.extraDays || 0,
         net_salary: (emp.salaryA || 0) + (emp.intensive || 0) + (emp.travelling || 0) - emp.epf - (emp.advances || 0) - (emp.cover || 0),
         status: 'Pending',
         branch: emp.branch
@@ -75,6 +77,7 @@ export async function savePayroll(record: Partial<PayrollRecord>): Promise<void>
     cover: record.cover || 0,
     intensive: record.intensive || 0,
     travelling: record.travelling || 0,
+    extra_days: record.extraDays || 0,
     net_salary: record.netSalary,
     status: record.status || 'Pending',
     branch: record.branch
@@ -91,6 +94,7 @@ export async function updatePayroll(id: string, updates: Partial<PayrollRecord>)
   if (updates.cover !== undefined) payload.cover = updates.cover;
   if (updates.intensive !== undefined) payload.intensive = updates.intensive;
   if (updates.travelling !== undefined) payload.travelling = updates.travelling;
+  if (updates.extraDays !== undefined) payload.extra_days = updates.extraDays;
   if (updates.netSalary !== undefined) payload.net_salary = updates.netSalary;
   if (updates.status !== undefined) payload.status = updates.status;
 

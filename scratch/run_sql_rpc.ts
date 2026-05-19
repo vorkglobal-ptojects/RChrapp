@@ -15,8 +15,8 @@ const supabase = createClient(supabaseUrl, serviceRoleKey);
 
 async function run() {
   const sql = `
-    ALTER TABLE public.leave_requests 
-    RENAME COLUMN is_urgent TO is_quota_exceeded;
+    ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS extra_days NUMERIC(15, 2) DEFAULT 0;
+    ALTER TABLE public.payroll ADD COLUMN IF NOT EXISTS extra_days NUMERIC(15, 2) DEFAULT 0;
   `;
 
   console.log('Trying rpc("run_sql")...');

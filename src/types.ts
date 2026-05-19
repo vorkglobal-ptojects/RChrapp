@@ -41,13 +41,14 @@ export interface UserProfile {
   accountHolderName?: string;
   nic?: string;
   nickname?: string;
+  extraDays?: number;
 }
 
 export interface AttendanceRecord {
   id?: string;
   userId: string;
   date: string;
-  checkIn: any; // Timestamp or Date
+  checkIn: any; // Date
   checkOut?: any;
   isLate: boolean;
   isEarlyOut: boolean;
@@ -103,6 +104,7 @@ export interface PayrollRecord {
   cover: number;
   intensive: number;
   travelling: number;
+  extraDays?: number;
   netSalary: number;
   status: 'Paid' | 'Pending';
   createdAt: any;
