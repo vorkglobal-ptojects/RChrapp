@@ -64,12 +64,12 @@ export async function deleteLeave(id: string): Promise<void> {
 export async function rejectExpiredLeaves(): Promise<void> {
   const today = new Date().toISOString().split('T')[0];
 
-  // Find pending leaves where end_date is today or in the past
+  // Find pending leaves where end_date is strictly in the past (NOT today)
   const { data: expired } = await supabase
     .from('leave_requests')
     .select('id')
     .eq('status', 'Pending')
-    .lte('end_date', today);
+    .lt('end_date', today);
 
   if (expired && expired.length > 0) {
     const ids = expired.map(l => l.id);
@@ -122,7 +122,7 @@ export async function approveLeaveRequest(req: LeaveRequest, adminId: string): P
   // 2. Fetch current profile
   const { data: profile, error: profileError } = await supabase
     .from('profiles')
-    .select('used_leaves')
+    .select('used_leaves, extra_days')
     .eq('id', req.userId)
     .single();
 
@@ -134,6 +134,41 @@ export async function approveLeaveRequest(req: LeaveRequest, adminId: string): P
   const daysTaken = calculateLeaveDays(req.leaveType, req.startDate, req.endDate, req.startTime, req.endTime);
 
   usedLeaves[leaveTypeKey] = (usedLeaves[leaveTypeKey] || 0) + daysTaken;
+
+  const { error: profileUpdateError } = await supabase
+    .from('profiles')
+    .update({ used_leaves: usedLeaves })
+    .eq('id', req.userId);
+
+  if (profileUpdateError) throw profileUpdateError;
+}
+
+export async function cancelApprovedLeave(req: LeaveRequest, adminId: string): Promise<void> {
+  if (!req.id) throw new Error('Leave request ID is missing');
+
+  // 1. Update status to Cancelled
+  const { error: updateError } = await supabase
+    .from('leave_requests')
+    .update({ status: 'Cancelled', approved_by: adminId, updated_at: new Date().toISOString() })
+    .eq('id', req.id);
+
+  if (updateError) throw updateError;
+
+  // 2. Fetch current profile
+  const { data: profile, error: profileError } = await supabase
+    .from('profiles')
+    .select('used_leaves, extra_days')
+    .eq('id', req.userId)
+    .single();
+
+  if (profileError) throw profileError;
+
+  // 3. Update used leaves
+  const usedLeaves = profile?.used_leaves || { annual: 0, sick: 0, casual: 0, short: 0 };
+  const leaveTypeKey = req.leaveType.toLowerCase() as keyof typeof usedLeaves;
+  const daysTaken = calculateLeaveDays(req.leaveType, req.startDate, req.endDate, req.startTime, req.endTime);
+
+  usedLeaves[leaveTypeKey] = Math.max(0, (usedLeaves[leaveTypeKey] || 0) - daysTaken);
 
   const { error: profileUpdateError } = await supabase
     .from('profiles')

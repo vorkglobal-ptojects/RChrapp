@@ -43,37 +43,9 @@ export async function checkIn(userId: string): Promise<void> {
   });
   
   if (error) throw error;
-}
 
-export async function checkOut(userId: string): Promise<void> {
-  const now = new Date();
-  const dateStr = now.toISOString().split('T')[0];
-
-  // Rule: Early out if before 5:30 PM Colombo time
-  const colomboNow = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Colombo' }));
-  const isEarlyOut = colomboNow.getHours() < 17 || (colomboNow.getHours() === 17 && colomboNow.getMinutes() < 30);
-
-  // Fetch existing attendance record first to ensure we only reward once
-  const { data: existingAtt } = await supabase
-    .from('attendance')
-    .select('check_in, check_out')
-    .eq('user_id', userId)
-    .eq('date', dateStr)
-    .single();
-
-  const { error } = await supabase
-    .from('attendance')
-    .update({
-      check_out: now.toISOString(),
-      is_early_out: isEarlyOut
-    })
-    .eq('user_id', userId)
-    .eq('date', dateStr);
-    
-  if (error) throw error;
-
-  // Detect Sunday work reward: check_in exists, check_out was previously null, and day is Sunday (0)
-  if (existingAtt && existingAtt.check_in && !existingAtt.check_out && colomboNow.getDay() === 0) {
+  // Detect Sunday work reward on clock-in
+  if (colomboNow.getDay() === 0) {
     try {
       const { data: profile } = await supabase
         .from('profiles')
@@ -106,7 +78,35 @@ export async function checkOut(userId: string): Promise<void> {
         }
       }
     } catch (err) {
-      console.error('Failed to reward Sunday leave quota:', err);
+      console.error('Failed to reward Sunday leave quota on check in:', err);
     }
   }
+}
+
+export async function checkOut(userId: string): Promise<void> {
+  const now = new Date();
+  const dateStr = now.toISOString().split('T')[0];
+
+  // Rule: Early out if before 5:30 PM Colombo time
+  const colomboNow = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Colombo' }));
+  const isEarlyOut = colomboNow.getHours() < 17 || (colomboNow.getHours() === 17 && colomboNow.getMinutes() < 30);
+
+  // Fetch existing attendance record first to ensure we only reward once
+  const { data: existingAtt } = await supabase
+    .from('attendance')
+    .select('check_in, check_out')
+    .eq('user_id', userId)
+    .eq('date', dateStr)
+    .single();
+
+  const { error } = await supabase
+    .from('attendance')
+    .update({
+      check_out: now.toISOString(),
+      is_early_out: isEarlyOut
+    })
+    .eq('user_id', userId)
+    .eq('date', dateStr);
+    
+  if (error) throw error;
 }

@@ -14,7 +14,7 @@ import { motion, AnimatePresence } from 'motion/react';
 export default function Leaves() {
   const { user } = useAuth();
   const [leaves, setLeaves] = useState<LeaveRequest[]>([]);
-  const [filter, setFilter] = useState<'All' | 'Pending' | 'Approved' | 'Rejected' | 'Unapproved'>('All');
+  const [filter, setFilter] = useState<'All' | 'Pending' | 'Approved' | 'Rejected' | 'Unapproved' | 'Untaken leaves'>('All');
   const [search, setSearch] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -200,6 +200,17 @@ export default function Leaves() {
     }
   };
 
+  const handleCancelApproved = async (req: LeaveRequest) => {
+    if (!window.confirm('Are you sure you want to cancel this approved leave? The quota will be refunded.')) return;
+    try {
+      await leaveService.cancelApprovedLeave(req, user!.uid);
+      toast.success('Approved leave cancelled successfully');
+      loadData();
+    } catch (err: any) {
+      toast.error('Failed to cancel leave');
+    }
+  };
+
   const filteredLeaves = leaves.filter(l => {
     let matchesFilter = filter === 'All' || l.status === filter;
 
@@ -208,6 +219,8 @@ export default function Leaves() {
       matchesFilter = l.status === 'Rejected' && !l.approvedBy;
     } else if (filter === 'Rejected') {
       matchesFilter = l.status === 'Rejected' && !!l.approvedBy;
+    } else if (filter === 'Untaken leaves') {
+      matchesFilter = l.status === 'Cancelled';
     }
 
     const matchesSearch = (l.userName || '').toLowerCase().includes(search.toLowerCase()) ||
@@ -239,7 +252,7 @@ export default function Leaves() {
   };
 
   const totalUsed = (Object.values(user?.usedLeaves || {}) as number[]).reduce((a: number, b: number) => a + (Number(b) || 0), 0);
-  const remainingDays = (Number(user?.leaveQuotas?.annual) || 14) - totalUsed;
+  const remainingDays = (Number(user?.leaveQuotas?.annual) || 14) + (Number(user?.extraDays) || 0) - totalUsed;
 
   return (
     <div className="space-y-8 pb-12">
@@ -314,7 +327,7 @@ export default function Leaves() {
           />
         </div>
         <div className="flex flex-wrap gap-2">
-          {['All', 'Pending', 'Approved', 'Rejected', 'Unapproved'].map((f) => (
+          {['All', 'Pending', 'Approved', 'Rejected', 'Unapproved', 'Untaken leaves'].map((f) => (
             <button
               key={f}
               onClick={() => setFilter(f as any)}
@@ -393,9 +406,10 @@ export default function Leaves() {
                     req.status === 'Approved' ? "bg-green-50 text-green-700 border-green-100" :
                       req.status === 'Rejected' && req.approvedBy ? "bg-red-50 text-red-700 border-red-100" :
                         req.status === 'Rejected' && !req.approvedBy ? "bg-zinc-50 text-zinc-700 border-zinc-100" :
-                          "bg-amber-50 text-amber-700 border-amber-100"
+                          req.status === 'Cancelled' ? "bg-purple-50 text-purple-700 border-purple-100" :
+                            "bg-amber-50 text-amber-700 border-amber-100"
                   )}>
-                    {req.status === 'Rejected' && !req.approvedBy ? 'Unapproved' : req.status}
+                    {req.status === 'Rejected' && !req.approvedBy ? 'Unapproved' : req.status === 'Cancelled' ? 'Untaken' : req.status}
                   </div>
                   {req.imageUrl && (
                     <a
@@ -455,11 +469,11 @@ export default function Leaves() {
                       Processed by<br />
                       <span className="text-zinc-900">{req.approvedBy}</span>
                     </div>
-                    {req.status === 'Rejected' && (user?.role === 'hr' || user?.role === 'owner' || user?.role === 'super') && (
+                    {(req.status === 'Rejected' || req.status === 'Approved') && (user?.role === 'hr' || user?.role === 'owner' || user?.role === 'super') && (
                       <button
-                        onClick={() => handleDelete(req.id!)}
+                        onClick={() => req.status === 'Approved' ? handleCancelApproved(req) : handleDelete(req.id!)}
                         className="p-2.5 bg-red-50 text-red-500 rounded-xl hover:bg-red-100 transition-all ml-2"
-                        title="Delete Rejected Request"
+                        title={req.status === 'Approved' ? "Cancel Approved Request" : "Delete Rejected Request"}
                       >
                         <Trash2 size={16} />
                       </button>

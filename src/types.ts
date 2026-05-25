@@ -55,7 +55,7 @@ export interface AttendanceRecord {
 }
 
 export type LeaveType = 'Annual' | 'Sick' | 'Casual' | 'Short';
-export type LeaveStatus = 'Pending' | 'Approved' | 'Rejected';
+export type LeaveStatus = 'Pending' | 'Approved' | 'Rejected' | 'Cancelled';
 
 export interface LeaveRequest {
   id?: string;
