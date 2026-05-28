@@ -24,8 +24,24 @@ CREATE TABLE public.profiles (
   must_reset_password BOOLEAN DEFAULT TRUE,
   leave_quotas JSONB DEFAULT '{"annual": 14, "sick": 7, "casual": 7, "short": 8}'::JSONB,
   used_leaves JSONB DEFAULT '{"annual": 0, "sick": 0, "casual": 0, "short": 0}'::JSONB,
+  sort_order INTEGER DEFAULT 999,
+  bank_name TEXT,
+  bank_branch TEXT,
+  account_no TEXT,
+  account_holder_name TEXT,
+  nic TEXT,
+  nickname TEXT,
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
+
+-- Migration: Add bank detail columns if they don't exist (run this on existing databases)
+-- ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS bank_name TEXT;
+-- ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS bank_branch TEXT;
+-- ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS account_no TEXT;
+-- ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS account_holder_name TEXT;
+-- ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS sort_order INTEGER DEFAULT 999;
+-- ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS nic TEXT;
+-- ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS nickname TEXT;
 
 -- 2. Create attendance table
 CREATE TABLE public.attendance (

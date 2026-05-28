@@ -278,6 +278,20 @@ export default function ManagePayroll() {
                     <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">{p.branch || 'General'}</p>
                     {isDraft && <span className="text-[9px] font-black bg-orange-100 text-orange-600 px-1.5 py-0.5 rounded uppercase tracking-tighter">Draft</span>}
                   </div>
+                  {/* Bank Details */}
+                  {(() => {
+                    const emp = employees.find(e => e.uid === p.userId);
+                    if (!emp?.bankName && !emp?.accountNo) {
+                      return <p className="text-[10px] font-bold text-red-400 italic mt-0.5">Bank details not updated</p>;
+                    }
+                    return (
+                      <div className="mt-1 space-y-0.5">
+                        <p className="text-[10px] font-bold text-zinc-500">{emp?.bankName} — {emp?.bankBranch}</p>
+                        <p className="text-[10px] font-mono text-zinc-500">{emp?.accountNo}</p>
+                        <p className="text-[10px] text-zinc-400">{emp?.accountHolderName}</p>
+                      </div>
+                    );
+                  })()}
                 </div>
               </div>
 
