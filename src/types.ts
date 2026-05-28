@@ -110,6 +110,10 @@ export interface PayrollRecord {
   createdAt: any;
   branch: string;
   sortOrder?: number;
+  bankName?: string;
+  bankBranch?: string;
+  accountNo?: string;
+  accountHolderName?: string;
   // Additional fields for management
   incentives?: number;
   bonus?: number;

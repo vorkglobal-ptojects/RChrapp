@@ -491,6 +491,10 @@ export default function Payroll() {
               <tr className="bg-zinc-50/50">
                 <th className="px-8 py-4 text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Employee</th>
                 <th className="px-8 py-4 text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Month</th>
+                <th className="px-8 py-4 text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Bank Name</th>
+                <th className="px-8 py-4 text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Branch Name</th>
+                <th className="px-8 py-4 text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Account Number</th>
+                <th className="px-8 py-4 text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Holder Name</th>
                 <th className="px-8 py-4 text-[10px] font-bold text-zinc-400 uppercase tracking-widest text-right">Salary A</th>
                 <th className="px-8 py-4 text-[10px] font-bold text-zinc-400 uppercase tracking-widest text-right">EPF</th>
                 <th className="px-8 py-4 text-[10px] font-bold text-zinc-400 uppercase tracking-widest text-right">Advances</th>
@@ -519,6 +523,18 @@ export default function Payroll() {
                   <td className="px-8 py-5">
                     <span className="text-sm font-bold text-zinc-700">{months[p.month] || 'Unknown'} {p.year}</span>
                   </td>
+                  {(!p.bankName && !p.accountNo) ? (
+                    <td colSpan={4} className="px-8 py-5 text-sm font-bold text-red-500 text-center italic">
+                      Bank details not updated
+                    </td>
+                  ) : (
+                    <>
+                      <td className="px-8 py-5 text-sm font-bold text-zinc-900">{p.bankName || '-'}</td>
+                      <td className="px-8 py-5 text-sm font-bold text-zinc-900">{p.bankBranch || '-'}</td>
+                      <td className="px-8 py-5 text-sm font-bold text-zinc-900">{p.accountNo || '-'}</td>
+                      <td className="px-8 py-5 text-sm font-bold text-zinc-900">{p.accountHolderName || '-'}</td>
+                    </>
+                  )}
                   <td className="px-8 py-5 text-sm font-bold text-zinc-900 text-right">
                     {(p.salaryA || 0).toLocaleString()}
                   </td>
@@ -556,7 +572,7 @@ export default function Payroll() {
 
               {filteredPayrolls.length === 0 && (
                 <tr>
-                  <td colSpan={12} className="px-8 py-16 text-center text-zinc-400 font-medium">
+                  <td colSpan={16} className="px-8 py-16 text-center text-zinc-400 font-medium">
                     No payroll records found for the selected month.
                   </td>
                 </tr>

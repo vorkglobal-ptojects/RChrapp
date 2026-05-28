@@ -3,7 +3,7 @@ import { PayrollRecord } from '../types';
 import { getEmployees } from './userService';
 
 export async function getPayroll(userId?: string): Promise<PayrollRecord[]> {
-  let query = supabase.from('payroll').select('*, profiles(name, role, branch, sort_order)');
+  let query = supabase.from('payroll').select('*, profiles(name, role, branch, sort_order, bank_name, bank_branch, account_no, account_holder_name)');
   if (userId) query = query.eq('user_id', userId);
   
   const { data, error } = await query;
@@ -27,7 +27,11 @@ export async function getPayroll(userId?: string): Promise<PayrollRecord[]> {
     status: d.status,
     createdAt: d.created_at,
     branch: d.branch || d.profiles?.branch,
-    sortOrder: d.profiles?.sort_order ?? 999
+    sortOrder: d.profiles?.sort_order ?? 999,
+    bankName: d.profiles?.bank_name,
+    bankBranch: d.profiles?.bank_branch,
+    accountNo: d.profiles?.account_no,
+    accountHolderName: d.profiles?.account_holder_name
   }));
 
   // Sort by sortOrder
