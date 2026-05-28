@@ -101,8 +101,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const login = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) throw error;
+
+    if (data?.user) {
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('id', data.user.id)
+        .maybeSingle();
+
+      if (profileError) {
+        await supabase.auth.signOut();
+        throw new Error('Failed to verify profile. Please try again.');
+      }
+
+      if (!profile) {
+        await supabase.auth.signOut();
+        throw new Error('No employee profile found for this account. Please contact system administrator.');
+      }
+    }
   };
 
   const logout = async () => {

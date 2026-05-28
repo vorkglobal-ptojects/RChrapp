@@ -54,7 +54,7 @@ export default function Login() {
 
           <div className="relative z-10">
             <p className="text-sm font-bold text-orange-100 uppercase tracking-[0.15em] opacity-80">
-              Powered by Vork.Global
+
             </p>
           </div>
 
