@@ -43,6 +43,44 @@ export async function checkIn(userId: string): Promise<void> {
   });
   
   if (error) throw error;
+
+  // Detect Sunday work reward on clock-in
+  if (colomboNow.getDay() === 0) {
+    try {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('leave_quotas, extra_days')
+        .eq('id', userId)
+        .single();
+
+      if (profile) {
+        const quotas = profile.leave_quotas || { annual: 14, sick: 7, casual: 7, short: 8 };
+        quotas.annual = (Number(quotas.annual) || 14) + 1;
+        const currentExtraDays = (Number(profile.extra_days) || 0) + 1;
+
+        // Try updating leave_quotas and extra_days
+        const { error: upError } = await supabase
+          .from('profiles')
+          .update({
+            leave_quotas: quotas,
+            extra_days: currentExtraDays
+          })
+          .eq('id', userId);
+
+        // Fallback: If extra_days column doesn't exist yet, update only leave_quotas
+        if (upError && upError.message.includes('column "extra_days"')) {
+          await supabase
+            .from('profiles')
+            .update({
+              leave_quotas: quotas
+            })
+            .eq('id', userId);
+        }
+      }
+    } catch (err) {
+      console.error('Failed to reward Sunday leave quota on check in:', err);
+    }
+  }
 }
 
 export async function checkOut(userId: string): Promise<void> {
@@ -52,6 +90,14 @@ export async function checkOut(userId: string): Promise<void> {
   // Rule: Early out if before 5:30 PM Colombo time
   const colomboNow = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Colombo' }));
   const isEarlyOut = colomboNow.getHours() < 17 || (colomboNow.getHours() === 17 && colomboNow.getMinutes() < 30);
+
+  // Fetch existing attendance record first to ensure we only reward once
+  const { data: existingAtt } = await supabase
+    .from('attendance')
+    .select('check_in, check_out')
+    .eq('user_id', userId)
+    .eq('date', dateStr)
+    .single();
 
   const { error } = await supabase
     .from('attendance')

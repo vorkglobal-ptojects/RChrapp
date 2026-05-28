@@ -14,28 +14,34 @@ if (!supabaseUrl || !serviceRoleKey) {
 const supabase = createClient(supabaseUrl, serviceRoleKey);
 
 async function run() {
-  const sql = `
-    ALTER TABLE public.profiles 
-    ADD COLUMN IF NOT EXISTS bank_name TEXT,
-    ADD COLUMN IF NOT EXISTS bank_branch TEXT,
-    ADD COLUMN IF NOT EXISTS account_no TEXT,
-    ADD COLUMN IF NOT EXISTS account_holder_name TEXT;
-  `;
-
-  console.log('Trying rpc("run_sql")...');
+  console.log('Reverting unapproved leave for Tharushi Apsara...');
   try {
-    const { data, error } = await supabase.rpc('run_sql', { sql });
-    console.log('Result run_sql:', { data, error });
-  } catch (err: any) {
-    console.error('Error run_sql:', err.message);
-  }
+    const { data: users, error: userError } = await supabase
+      .from('profiles')
+      .select('id, name')
+      .ilike('name', '%Tharushi Apsara%');
 
-  console.log('Trying rpc("exec_sql")...');
-  try {
-    const { data, error } = await supabase.rpc('exec_sql', { sql });
-    console.log('Result exec_sql:', { data, error });
+    if (userError) throw userError;
+    
+    if (!users || users.length === 0) {
+      console.log('User Tharushi Apsara not found.');
+      return;
+    }
+
+    const userId = users[0].id;
+
+    const { data: updateData, error: updateError } = await supabase
+      .from('leave_requests')
+      .update({ status: 'Pending', approved_by: null })
+      .eq('user_id', userId)
+      .eq('start_date', '2026-05-25')
+      .eq('status', 'Rejected');
+
+    if (updateError) throw updateError;
+
+    console.log('Successfully reverted leave to Pending!');
   } catch (err: any) {
-    console.error('Error exec_sql:', err.message);
+    console.error('Exception:', err.message);
   }
 }
 

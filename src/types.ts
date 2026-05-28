@@ -41,20 +41,21 @@ export interface UserProfile {
   accountHolderName?: string;
   nic?: string;
   nickname?: string;
+  extraDays?: number;
 }
 
 export interface AttendanceRecord {
   id?: string;
   userId: string;
   date: string;
-  checkIn: any; // Timestamp or Date
+  checkIn: any; // Date
   checkOut?: any;
   isLate: boolean;
   isEarlyOut: boolean;
 }
 
 export type LeaveType = 'Annual' | 'Sick' | 'Casual' | 'Short';
-export type LeaveStatus = 'Pending' | 'Approved' | 'Rejected';
+export type LeaveStatus = 'Pending' | 'Approved' | 'Rejected' | 'Cancelled';
 
 export interface LeaveRequest {
   id?: string;
@@ -70,7 +71,7 @@ export interface LeaveRequest {
   status: LeaveStatus;
   approvedBy?: string;
   createdAt: any;
-  isUrgent?: boolean;
+  isQuotaExceeded?: boolean;
   imageUrl?: string;
   userPhoto?: string;
 }
@@ -103,11 +104,16 @@ export interface PayrollRecord {
   cover: number;
   intensive: number;
   travelling: number;
+  extraDays?: number;
   netSalary: number;
   status: 'Paid' | 'Pending';
   createdAt: any;
   branch: string;
   sortOrder?: number;
+  bankName?: string;
+  bankBranch?: string;
+  accountNo?: string;
+  accountHolderName?: string;
   // Additional fields for management
   incentives?: number;
   bonus?: number;

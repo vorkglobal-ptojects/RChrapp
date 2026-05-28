@@ -19,12 +19,29 @@ CREATE TABLE public.profiles (
   intensive NUMERIC(15, 2) DEFAULT 0,
   travelling NUMERIC(15, 2) DEFAULT 0,
   net NUMERIC(15, 2) DEFAULT 0,
+  extra_days NUMERIC(15, 2) DEFAULT 0,
   performance_score NUMERIC(5, 2) DEFAULT 0,
   must_reset_password BOOLEAN DEFAULT TRUE,
   leave_quotas JSONB DEFAULT '{"annual": 14, "sick": 7, "casual": 7, "short": 8}'::JSONB,
   used_leaves JSONB DEFAULT '{"annual": 0, "sick": 0, "casual": 0, "short": 0}'::JSONB,
+  sort_order INTEGER DEFAULT 999,
+  bank_name TEXT,
+  bank_branch TEXT,
+  account_no TEXT,
+  account_holder_name TEXT,
+  nic TEXT,
+  nickname TEXT,
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
+
+-- Migration: Add bank detail columns if they don't exist (run this on existing databases)
+-- ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS bank_name TEXT;
+-- ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS bank_branch TEXT;
+-- ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS account_no TEXT;
+-- ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS account_holder_name TEXT;
+-- ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS sort_order INTEGER DEFAULT 999;
+-- ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS nic TEXT;
+-- ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS nickname TEXT;
 
 -- 2. Create attendance table
 CREATE TABLE public.attendance (
@@ -51,7 +68,7 @@ CREATE TABLE public.leave_requests (
   reason TEXT,
   status TEXT NOT NULL DEFAULT 'Pending' CHECK (status IN ('Pending', 'Approved', 'Rejected')),
   approved_by UUID REFERENCES public.profiles(id),
-  is_urgent BOOLEAN DEFAULT FALSE,
+  is_quota_exceeded BOOLEAN DEFAULT FALSE,
   image_url TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
@@ -91,6 +108,7 @@ CREATE TABLE public.payroll (
   cover NUMERIC(15, 2) NOT NULL,
   intensive NUMERIC(15, 2) NOT NULL,
   travelling NUMERIC(15, 2) NOT NULL,
+  extra_days NUMERIC(15, 2) DEFAULT 0,
   net_salary NUMERIC(15, 2) NOT NULL,
   status TEXT NOT NULL DEFAULT 'Pending' CHECK (status IN ('Paid', 'Pending')),
   branch TEXT NOT NULL,

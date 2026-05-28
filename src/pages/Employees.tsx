@@ -96,7 +96,7 @@ export default function Employees() {
   const exportToCSV = () => {
     const headers = [
       'Branch', 'Name', 'Join Date', 'Salary A', 'EPF', 
-      'Advances', 'Cover Dedication', 'Intensive', 'Travelling', 'Net Salary', 'Username', 'Role'
+      'Advances', 'Cover Dedication', 'Intensive', 'Travelling', 'Extra Days', 'Net Salary', 'Username', 'Role'
     ];
     
     const rows = filteredEmployees.map(emp => [
@@ -109,6 +109,7 @@ export default function Employees() {
       emp.cover,
       emp.intensive,
       emp.travelling,
+      emp.extraDays || 0,
       emp.net,
       emp.username,
       emp.role
@@ -210,7 +211,10 @@ export default function Employees() {
                 <th className="px-6 py-4 text-[10px] font-black text-zinc-400 uppercase tracking-widest text-right">Cover Dedication</th>
                 <th className="px-6 py-4 text-[10px] font-black text-zinc-400 uppercase tracking-widest text-right">Intensive</th>
                 <th className="px-6 py-4 text-[10px] font-black text-zinc-400 uppercase tracking-widest text-right">Travelling</th>
+                <th className="px-6 py-4 text-[10px] font-black text-zinc-400 uppercase tracking-widest text-right text-green-600">Extra Days</th>
                 <th className="px-6 py-4 text-[10px] font-black text-zinc-400 uppercase tracking-widest text-right text-orange-500">Net Salary</th>
+                <th className="px-6 py-4 text-[10px] font-black text-zinc-400 uppercase tracking-widest text-center">Username</th>
+                <th className="px-6 py-4 text-[10px] font-black text-zinc-400 uppercase tracking-widest text-center">Role</th>
                 <th className="px-6 py-4 text-[10px] font-black text-zinc-400 uppercase tracking-widest text-center">Actions</th>
               </tr>
             </thead>
@@ -235,8 +239,9 @@ export default function Employees() {
                   <td className="px-6 py-4 text-xs font-bold text-red-600 text-right">{emp.cover.toLocaleString()}</td>
                   <td className="px-6 py-4 text-xs font-bold text-green-600 text-right">{emp.intensive.toLocaleString()}</td>
                   <td className="px-6 py-4 text-xs font-bold text-green-600 text-right">{emp.travelling.toLocaleString()}</td>
+                  <td className="px-6 py-4 text-xs font-bold text-green-600 text-right">{emp.extraDays || 0}</td>
                   <td className="px-6 py-4 text-sm font-black text-orange-600 text-right bg-orange-50/30">{emp.net.toLocaleString()}</td>
-                  <td className="px-6 py-4 text-xs font-medium text-zinc-500">{emp.username}</td>
+                  <td className="px-6 py-4 text-xs font-medium text-zinc-500 text-center">{emp.username}</td>
                   <td className="px-6 py-4">
                     <span className={cn(
                       "text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded-lg",
@@ -367,6 +372,7 @@ export default function Employees() {
                     const cover = Number(data.cover) || 0;
                     const intensive = Number(data.intensive) || 0;
                     const travelling = Number(data.travelling) || 0;
+                    const extraDays = Number(data.extraDays) || 0;
 
                     const newEmp: UserProfile = {
                       uid: editingEmp?.uid || `emp-${Date.now()}`,
@@ -384,6 +390,7 @@ export default function Employees() {
                       cover,
                       intensive,
                       travelling,
+                      extraDays,
                       net: salaryA + salaryB + intensive + travelling - epf - advances - cover,
                       performanceScore: editingEmp?.performanceScore || 0,
                       leaveQuotas: editingEmp?.leaveQuotas || { annual: 14, sick: 0, casual: 0, short: 0 },
@@ -594,6 +601,17 @@ export default function Employees() {
                                 (form.elements.namedItem('net') as HTMLInputElement).value = (sA + intensive + travelling - epf - advances - cover).toString();
                               }
                             }}
+                            className="w-full px-5 py-3 bg-zinc-50 border border-zinc-100 rounded-2xl text-sm font-medium focus:ring-2 focus:ring-green-500 outline-none" 
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">Extra Days</label>
+                          <input 
+                            name="extraDays" 
+                            type="number" 
+                            step="0.5"
+                            defaultValue={editingEmp?.extraDays || 0} 
+                            required 
                             className="w-full px-5 py-3 bg-zinc-50 border border-zinc-100 rounded-2xl text-sm font-medium focus:ring-2 focus:ring-green-500 outline-none" 
                           />
                         </div>

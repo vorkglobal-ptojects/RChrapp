@@ -84,7 +84,7 @@ function exportPayslipsToPDF(payrolls: PayrollRecord[], monthIdx: number, year: 
     head: [[
       'Employee', 'Branch', 'Month',
       'Salary A', 'EPF', 'Advances', 'Cover',
-      'Intensive', 'Travelling', 'Net Salary', 'Status'
+      'Intensive', 'Travelling', 'Extra Days', 'Net Salary', 'Status'
     ]],
     body: payrolls.map(p => [
       p.userName || 'Unknown',
@@ -96,6 +96,7 @@ function exportPayslipsToPDF(payrolls: PayrollRecord[], monthIdx: number, year: 
       (p.cover      || 0).toLocaleString(),
       (p.intensive  || 0).toLocaleString(),
       (p.travelling || 0).toLocaleString(),
+      (p.extraDays  || 0).toLocaleString(),
       `LKR ${(p.netSalary || 0).toLocaleString()}`,
       p.status,
     ]),
@@ -107,6 +108,7 @@ function exportPayslipsToPDF(payrolls: PayrollRecord[], monthIdx: number, year: 
       payrolls.reduce((s,p) => s+(p.cover||0),0).toLocaleString(),
       payrolls.reduce((s,p) => s+(p.intensive||0),0).toLocaleString(),
       payrolls.reduce((s,p) => s+(p.travelling||0),0).toLocaleString(),
+      payrolls.reduce((s,p) => s+(p.extraDays||0),0).toLocaleString(),
       `LKR ${totalNet.toLocaleString()}`,
       `${paidCount} Paid / ${pendingCount} Pending`,
     ]],
@@ -132,21 +134,22 @@ function exportPayslipsToPDF(payrolls: PayrollRecord[], monthIdx: number, year: 
       fillColor: [250, 250, 250],   // zinc-50
     },
     columnStyles: {
-      0:  { fontStyle: 'bold', cellWidth: 42 },
-      1:  { cellWidth: 26 },
-      2:  { cellWidth: 26 },
-      3:  { halign: 'right', cellWidth: 24 },
-      4:  { halign: 'right', cellWidth: 20, textColor: [220, 38, 38]  },
-      5:  { halign: 'right', cellWidth: 20, textColor: [220, 38, 38]  },
-      6:  { halign: 'right', cellWidth: 20, textColor: [220, 38, 38]  },
-      7:  { halign: 'right', cellWidth: 24, textColor: [22, 163, 74]  },
-      8:  { halign: 'right', cellWidth: 24, textColor: [22, 163, 74]  },
-      9:  { halign: 'right', cellWidth: 32, fontStyle: 'bold' },
-      10: { halign: 'center', cellWidth: 24 },
+      0:  { fontStyle: 'bold', cellWidth: 38 },
+      1:  { cellWidth: 22 },
+      2:  { cellWidth: 22 },
+      3:  { halign: 'right', cellWidth: 22 },
+      4:  { halign: 'right', cellWidth: 18, textColor: [220, 38, 38]  },
+      5:  { halign: 'right', cellWidth: 18, textColor: [220, 38, 38]  },
+      6:  { halign: 'right', cellWidth: 18, textColor: [220, 38, 38]  },
+      7:  { halign: 'right', cellWidth: 22, textColor: [22, 163, 74]  },
+      8:  { halign: 'right', cellWidth: 22, textColor: [22, 163, 74]  },
+      9:  { halign: 'right', cellWidth: 20, textColor: [22, 163, 74]  },
+      10: { halign: 'right', cellWidth: 30, fontStyle: 'bold' },
+      11: { halign: 'center', cellWidth: 22 },
     },
     // colour the status cell
     didParseCell(data) {
-      if (data.section === 'body' && data.column.index === 10) {
+      if (data.section === 'body' && data.column.index === 11) {
         const val = String(data.cell.raw);
         if (val === 'Paid') {
           data.cell.styles.textColor    = [22, 163, 74];  // green-600
@@ -187,6 +190,7 @@ function exportToExcel(payrolls: PayrollRecord[], monthIdx: number, year: number
     'Cover': p.cover,
     'Intensive': p.intensive,
     'Travelling': p.travelling,
+    'Extra Days': p.extraDays || 0,
     'Net Payout': p.netSalary,
     'Status': p.status
   }));
@@ -487,12 +491,17 @@ export default function Payroll() {
               <tr className="bg-zinc-50/50">
                 <th className="px-8 py-4 text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Employee</th>
                 <th className="px-8 py-4 text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Month</th>
+                <th className="px-8 py-4 text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Bank Name</th>
+                <th className="px-8 py-4 text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Branch Name</th>
+                <th className="px-8 py-4 text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Account Number</th>
+                <th className="px-8 py-4 text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Holder Name</th>
                 <th className="px-8 py-4 text-[10px] font-bold text-zinc-400 uppercase tracking-widest text-right">Salary A</th>
                 <th className="px-8 py-4 text-[10px] font-bold text-zinc-400 uppercase tracking-widest text-right">EPF</th>
                 <th className="px-8 py-4 text-[10px] font-bold text-zinc-400 uppercase tracking-widest text-right">Advances</th>
                 <th className="px-8 py-4 text-[10px] font-bold text-zinc-400 uppercase tracking-widest text-right">Cover</th>
                 <th className="px-8 py-4 text-[10px] font-bold text-zinc-400 uppercase tracking-widest text-right">Intensive</th>
                 <th className="px-8 py-4 text-[10px] font-bold text-zinc-400 uppercase tracking-widest text-right">Travelling</th>
+                <th className="px-8 py-4 text-[10px] font-bold text-zinc-400 uppercase tracking-widest text-right text-green-600">Extra Days</th>
                 <th className="px-8 py-4 text-[10px] font-bold text-zinc-400 uppercase tracking-widest text-right text-orange-500">Net Salary</th>
                 <th className="px-8 py-4 text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Status</th>
               </tr>
@@ -514,6 +523,18 @@ export default function Payroll() {
                   <td className="px-8 py-5">
                     <span className="text-sm font-bold text-zinc-700">{months[p.month] || 'Unknown'} {p.year}</span>
                   </td>
+                  {(!p.bankName && !p.accountNo) ? (
+                    <td colSpan={4} className="px-8 py-5 text-sm font-bold text-red-500 text-center italic">
+                      Bank details not updated
+                    </td>
+                  ) : (
+                    <>
+                      <td className="px-8 py-5 text-sm font-bold text-zinc-900">{p.bankName || '-'}</td>
+                      <td className="px-8 py-5 text-sm font-bold text-zinc-900">{p.bankBranch || '-'}</td>
+                      <td className="px-8 py-5 text-sm font-bold text-zinc-900">{p.accountNo || '-'}</td>
+                      <td className="px-8 py-5 text-sm font-bold text-zinc-900">{p.accountHolderName || '-'}</td>
+                    </>
+                  )}
                   <td className="px-8 py-5 text-sm font-bold text-zinc-900 text-right">
                     {(p.salaryA || 0).toLocaleString()}
                   </td>
@@ -532,6 +553,9 @@ export default function Payroll() {
                   <td className="px-8 py-5 text-sm font-bold text-green-600 text-right">
                     {(p.travelling || 0).toLocaleString()}
                   </td>
+                  <td className="px-8 py-5 text-sm font-bold text-green-600 text-right">
+                    {(p.extraDays || 0).toLocaleString()}
+                  </td>
                   <td className="px-8 py-5 text-right">
                     <span className="text-base font-black text-orange-600">LKR {(p.netSalary || 0).toLocaleString()}</span>
                   </td>
@@ -548,7 +572,7 @@ export default function Payroll() {
 
               {filteredPayrolls.length === 0 && (
                 <tr>
-                  <td colSpan={11} className="px-8 py-16 text-center text-zinc-400 font-medium">
+                  <td colSpan={16} className="px-8 py-16 text-center text-zinc-400 font-medium">
                     No payroll records found for the selected month.
                   </td>
                 </tr>

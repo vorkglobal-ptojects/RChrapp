@@ -31,7 +31,8 @@ export function mapProfile(data: any): UserProfile {
     accountNo: data.account_no,
     accountHolderName: data.account_holder_name,
     nic: data.nic,
-    nickname: data.nickname
+    nickname: data.nickname,
+    extraDays: data.extra_days ? Number(data.extra_days) : 0
   };
 }
 
@@ -86,7 +87,8 @@ export async function saveEmployee(emp: UserProfile): Promise<void> {
     account_no: data.accountNo || null,
     account_holder_name: data.accountHolderName || null,
     nic: data.nic || null,
-    nickname: data.nickname || null
+    nickname: data.nickname || null,
+    extra_days: data.extraDays || 0
   };
 
   const { error } = await supabase.from('profiles').update(payload).eq('id', uid);
@@ -169,7 +171,8 @@ export async function registerFullEmployee(emp: UserProfile, password?: string):
     account_no: emp.accountNo || null,
     account_holder_name: emp.accountHolderName || null,
     nic: emp.nic || null,
-    nickname: emp.nickname || null
+    nickname: emp.nickname || null,
+    extra_days: emp.extraDays || 0
   });
 
   if (profileError) throw profileError;

@@ -4,7 +4,7 @@ import { PerformanceRecord } from '../types';
 export async function getPerformance(userId?: string): Promise<PerformanceRecord[]> {
   let query = supabase.from('performance').select('*, profiles!performance_user_id_fkey(name), evaluator:profiles!performance_evaluator_id_fkey(name)');
   if (userId) query = query.eq('user_id', userId);
-  
+
   const { data, error } = await query.order('created_at', { ascending: false });
   if (error) throw error;
 
