@@ -406,40 +406,31 @@ export default function ManagePayroll() {
                   <>
                     {(user?.role === 'super' || user?.role === 'owner' || user?.role === 'hr') ? (
                       <>
-                        {p.userId === user?.uid ? (
-                          <div className="flex items-center gap-2 px-4 py-3 bg-zinc-50 border border-zinc-100 rounded-2xl text-[10px] font-bold text-zinc-400 uppercase tracking-widest shadow-inner">
-                            <Lock size={14} className="text-zinc-300" />
-                            Self-Management Restricted
-                          </div>
+                        {(!isDraft && (p.status === 'Paid' || justPaidIds.has(p.id!))) ? (
+                          <button 
+                            onDoubleClick={() => p.id && handleUndoPayment(p.id)}
+                            className="px-6 py-3 bg-zinc-200 text-zinc-500 rounded-2xl font-bold text-xs shadow-inner flex items-center gap-2 cursor-pointer hover:bg-zinc-300 transition-all"
+                            title="Double-click to undo payment"
+                          >
+                            <Check size={16} />
+                            Payment Processed
+                          </button>
                         ) : (
                           <>
-                            {(!isDraft && (p.status === 'Paid' || justPaidIds.has(p.id!))) ? (
-                              <button 
-                                onDoubleClick={() => p.id && handleUndoPayment(p.id)}
-                                className="px-6 py-3 bg-zinc-200 text-zinc-500 rounded-2xl font-bold text-xs shadow-inner flex items-center gap-2 cursor-pointer hover:bg-zinc-300 transition-all"
-                                title="Double-click to undo payment"
-                              >
-                                <Check size={16} />
-                                Payment Processed
-                              </button>
-                            ) : (
-                              <>
-                                <button 
-                                  onClick={() => setEditingId(uniqueId)}
-                                  className="px-4 py-3 bg-zinc-50 text-zinc-600 rounded-2xl font-bold text-xs hover:bg-zinc-100 transition-all flex items-center gap-2"
-                                >
-                                  <Edit2 size={16} />
-                                  {isDraft ? 'Initialize' : 'Adjust'}
-                                </button>
-                                <button 
-                                  onClick={() => handleMarkAsPaid(p.userId, isDraft, p.id)}
-                                  className="px-6 py-3 bg-orange-500 text-white rounded-2xl font-bold text-xs hover:bg-orange-600 transition-all shadow-lg shadow-orange-100 flex items-center gap-2"
-                                >
-                                  <DollarSign size={16} />
-                                  Process Payment
-                                </button>
-                              </>
-                            )}
+                            <button 
+                              onClick={() => setEditingId(uniqueId)}
+                              className="px-4 py-3 bg-zinc-50 text-zinc-600 rounded-2xl font-bold text-xs hover:bg-zinc-100 transition-all flex items-center gap-2"
+                            >
+                              <Edit2 size={16} />
+                              {isDraft ? 'Initialize' : 'Adjust'}
+                            </button>
+                            <button 
+                              onClick={() => handleMarkAsPaid(p.userId, isDraft, p.id)}
+                              className="px-6 py-3 bg-orange-500 text-white rounded-2xl font-bold text-xs hover:bg-orange-600 transition-all shadow-lg shadow-orange-100 flex items-center gap-2"
+                            >
+                              <DollarSign size={16} />
+                              Process Payment
+                            </button>
                           </>
                         )}
                       </>
