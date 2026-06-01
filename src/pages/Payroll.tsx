@@ -345,6 +345,38 @@ export default function Payroll() {
         </div>
       </div>
 
+      {/* Month & Year Navigation Tabs at the Top */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white p-3 rounded-[2rem] border border-zinc-100 shadow-sm">
+        <div className="flex items-center gap-1 overflow-x-auto scrollbar-none pb-2 lg:pb-0">
+          {months.map((m, i) => {
+            const isSelected = filterMonth === i;
+            return (
+              <button
+                key={m}
+                onClick={() => setFilterMonth(i)}
+                className={cn(
+                  "px-4.5 py-2.5 rounded-2xl text-xs font-black transition-all whitespace-nowrap",
+                  isSelected 
+                    ? "bg-zinc-900 text-white shadow-md shadow-zinc-900/10" 
+                    : "text-zinc-500 hover:text-zinc-900 hover:bg-zinc-50"
+                )}
+              >
+                {m.substring(0, 3).toUpperCase()}
+              </button>
+            );
+          })}
+        </div>
+        <div className="flex items-center gap-2 border-t lg:border-t-0 lg:border-l border-zinc-100 pt-3 lg:pt-0 lg:pl-4">
+          <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest lg:hidden">Select Year</span>
+          <select 
+            value={filterYear}
+            onChange={(e) => setFilterYear(Number(e.target.value))}
+            className="px-4 py-2.5 bg-zinc-50 border border-zinc-100 rounded-2xl text-xs font-black text-zinc-600 outline-none focus:ring-2 focus:ring-orange-500 cursor-pointer min-w-[100px]"
+          >
+            {[2024, 2025, 2026, 2027].map(y => <option key={y} value={y}>{y}</option>)}
+          </select>
+        </div>
+      </div>
 
       {/* Generation Modal */}
       {showGenModal && (
@@ -475,20 +507,6 @@ export default function Payroll() {
               {branches.map(b => <option key={b} value={b}>{b}</option>)}
             </select>
           </div>
-          <select 
-            value={filterMonth}
-            onChange={(e) => setFilterMonth(Number(e.target.value))}
-            className="px-4 py-3 bg-zinc-50 border border-zinc-100 rounded-2xl text-sm font-bold text-zinc-600 outline-none focus:ring-2 focus:ring-orange-500"
-          >
-            {months.map((m, i) => <option key={m} value={i}>{m}</option>)}
-          </select>
-          <select 
-            value={filterYear}
-            onChange={(e) => setFilterYear(Number(e.target.value))}
-            className="px-4 py-3 bg-zinc-50 border border-zinc-100 rounded-2xl text-sm font-bold text-zinc-600 outline-none focus:ring-2 focus:ring-orange-500"
-          >
-            {[2024, 2025, 2026, 2027].map(y => <option key={y} value={y}>{y}</option>)}
-          </select>
         </div>
       </div>
 
