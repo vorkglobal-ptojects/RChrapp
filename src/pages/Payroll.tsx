@@ -83,13 +83,16 @@ function exportPayslipsToPDF(payrolls: PayrollRecord[], monthIdx: number, year: 
     startY: 44,
     head: [[
       'Employee', 'Branch', 'Month',
+      'Bank', 'Account No',
       'Salary A', 'EPF', 'Advances', 'Cover',
-      'Intensive', 'Travelling', 'Extra Days', 'Net Salary', 'Status'
+      'Intensive', 'Travelling', 'Extra', 'Net Salary', 'Status'
     ]],
     body: payrolls.map(p => [
       p.userName || 'Unknown',
       p.branch   || 'General',
       `${months[p.month] ?? '?'} ${p.year}`,
+      p.bankName || '-',
+      p.accountNo || '-',
       (p.salaryA    || 0).toLocaleString(),
       (p.epf        || 0).toLocaleString(),
       (p.advances   || 0).toLocaleString(),
@@ -101,7 +104,7 @@ function exportPayslipsToPDF(payrolls: PayrollRecord[], monthIdx: number, year: 
       p.status,
     ]),
     foot: [[
-      'TOTAL', '', '',
+      'TOTAL', '', '', '', '',
       totalA.toLocaleString(),
       totalEPF.toLocaleString(),
       payrolls.reduce((s,p) => s+(p.advances||0),0).toLocaleString(),
@@ -134,22 +137,24 @@ function exportPayslipsToPDF(payrolls: PayrollRecord[], monthIdx: number, year: 
       fillColor: [250, 250, 250],   // zinc-50
     },
     columnStyles: {
-      0:  { fontStyle: 'bold', cellWidth: 38 },
-      1:  { cellWidth: 22 },
-      2:  { cellWidth: 22 },
-      3:  { halign: 'right', cellWidth: 22 },
-      4:  { halign: 'right', cellWidth: 18, textColor: [220, 38, 38]  },
-      5:  { halign: 'right', cellWidth: 18, textColor: [220, 38, 38]  },
-      6:  { halign: 'right', cellWidth: 18, textColor: [220, 38, 38]  },
-      7:  { halign: 'right', cellWidth: 22, textColor: [22, 163, 74]  },
-      8:  { halign: 'right', cellWidth: 22, textColor: [22, 163, 74]  },
-      9:  { halign: 'right', cellWidth: 20, textColor: [22, 163, 74]  },
-      10: { halign: 'right', cellWidth: 30, fontStyle: 'bold' },
-      11: { halign: 'center', cellWidth: 22 },
+      0:  { fontStyle: 'bold', cellWidth: 28 }, // Employee
+      1:  { cellWidth: 16 }, // Branch
+      2:  { cellWidth: 16 }, // Month
+      3:  { cellWidth: 20 }, // Bank
+      4:  { cellWidth: 20 }, // Account No
+      5:  { halign: 'right', cellWidth: 16 }, // Salary A
+      6:  { halign: 'right', cellWidth: 14, textColor: [220, 38, 38]  }, // EPF
+      7:  { halign: 'right', cellWidth: 14, textColor: [220, 38, 38]  }, // Advances
+      8:  { halign: 'right', cellWidth: 14, textColor: [220, 38, 38]  }, // Cover
+      9:  { halign: 'right', cellWidth: 16, textColor: [22, 163, 74]  }, // Intensive
+      10: { halign: 'right', cellWidth: 16, textColor: [22, 163, 74]  }, // Travelling
+      11: { halign: 'right', cellWidth: 14, textColor: [22, 163, 74]  }, // Extra
+      12: { halign: 'right', cellWidth: 24, fontStyle: 'bold' }, // Net Salary
+      13: { halign: 'center', cellWidth: 16 }, // Status
     },
     // colour the status cell
     didParseCell(data) {
-      if (data.section === 'body' && data.column.index === 11) {
+      if (data.section === 'body' && data.column.index === 13) {
         const val = String(data.cell.raw);
         if (val === 'Paid') {
           data.cell.styles.textColor    = [22, 163, 74];  // green-600
@@ -184,6 +189,10 @@ function exportToExcel(payrolls: PayrollRecord[], monthIdx: number, year: number
     'Employee': p.userName || 'Unknown',
     'Branch': p.branch || 'General',
     'Month': `${months[p.month - 1] ?? '?'} ${p.year}`,
+    'Bank Name': p.bankName || 'Not updated',
+    'Bank Branch': p.bankBranch || 'Not updated',
+    'Account No': p.accountNo || 'Not updated',
+    'Account Holder': p.accountHolderName || 'Not updated',
     'Salary A': p.salaryA,
     'EPF': p.epf,
     'Advances': p.advances,
