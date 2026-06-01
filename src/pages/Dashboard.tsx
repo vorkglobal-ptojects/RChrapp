@@ -539,7 +539,7 @@ export default function Dashboard() {
                         { 
                           name: 'Remaining', 
                           value: Math.max(0, (Number(user.leaveQuotas?.annual) || 14) - (Object.values(user.usedLeaves || {}) as number[]).reduce((a: number, b: any) => a + (Number(b) || 0), 0)), 
-                          color: '#f97316' 
+                          color: '#f97215' 
                         },
                         { 
                           name: 'Used', 
@@ -554,7 +554,7 @@ export default function Dashboard() {
                       stroke="none"
                     >
                       {user && [
-                        { color: '#f97316' },
+                        { color: '#f97215' },
                         { color: '#f4f4f5' }
                       ].map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={entry.color} />

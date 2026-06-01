@@ -238,7 +238,7 @@ export default function Performance() {
                   <RadarChart cx="50%" cy="50%" outerRadius="80%" data={performanceData}>
                     <PolarGrid stroke="#f4f4f5" />
                     <PolarAngleAxis dataKey="subject" tick={{ fill: '#a1a1aa', fontSize: 10, fontWeight: 900 }} />
-                    <Radar name="Score" dataKey="A" stroke="#f97316" fill="#f97316" fillOpacity={0.1} strokeWidth={3} />
+                    <Radar name="Score" dataKey="A" stroke="#f97215" fill="#f97215" fillOpacity={0.1} strokeWidth={3} />
                   </RadarChart>
                 </ResponsiveContainer>
               </div>

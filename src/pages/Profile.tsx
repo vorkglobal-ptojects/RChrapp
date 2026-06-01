@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { 
+import {
   User, Mail, Shield, LogOut, Edit3,
   Phone, X, Camera, CreditCard, Award, MapPin
 } from 'lucide-react';
@@ -78,7 +78,7 @@ export default function Profile() {
         return toast.error('Both Bank Name and Account Number are required if updating bank details.');
       }
     }
-    
+
     try {
       toast.loading('Saving profile changes...');
       let finalPhotoUrl = formData.photoUrl || user.photoUrl || '';
@@ -101,7 +101,7 @@ export default function Profile() {
         accountNo: isEligibleBank ? formData.accountNo.trim() : user.accountNo,
         accountHolderName: isEligibleBank ? (formData.accountHolderName.trim() || fullName) : user.accountHolderName,
       };
-      
+
       await userService.saveEmployee(updatedUser);
       updateUser(updatedUser);
       setIsEditing(false);
@@ -135,7 +135,7 @@ export default function Profile() {
           <h1 className="text-3xl font-black text-zinc-900">My Profile</h1>
           <p className="text-zinc-500 font-medium tracking-tight">Manage your professional identity and workspace settings</p>
         </div>
-        <button 
+        <button
           onClick={() => setIsEditing(true)}
           className="flex items-center gap-2 px-6 py-3 bg-orange-500 text-white rounded-2xl font-bold hover:bg-orange-600 transition-all shadow-lg shadow-orange-100"
         >
@@ -161,7 +161,7 @@ export default function Profile() {
                 statusColors[user.status as keyof typeof statusColors] || 'bg-zinc-400'
               )} />
             </div>
-            
+
             <h2 className="text-2xl font-black text-zinc-900 leading-tight">{user.name}</h2>
             {user.nickname && (
               <p className="text-sm text-zinc-400 font-bold uppercase tracking-widest mt-1">"{user.nickname}"</p>
@@ -172,13 +172,13 @@ export default function Profile() {
                 {user.status}
               </span>
             </div>
-            
+
             <div className="space-y-3">
               <button className="w-full py-4 bg-zinc-50 text-zinc-600 rounded-2xl font-bold flex items-center justify-center gap-2 hover:bg-zinc-100 transition-all border border-zinc-100">
                 <Shield size={18} />
                 Security Settings
               </button>
-              <button 
+              <button
                 onClick={logout}
                 className="w-full py-4 bg-red-50 text-red-600 rounded-2xl font-bold flex items-center justify-center gap-2 hover:bg-red-100 transition-all border border-red-50"
               >
@@ -195,7 +195,7 @@ export default function Profile() {
           <div className="bg-white p-8 rounded-[2.5rem] border border-zinc-100 shadow-sm min-h-[400px]">
             <h3 className="text-xl font-black text-zinc-900 mb-8 flex items-center gap-2">
               <User size={22} className="text-blue-500" />
-              Identity Details
+              Identity Detail
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <div className="space-y-2">
@@ -338,7 +338,7 @@ export default function Profile() {
                       </span>
                     )}
                   </div>
-                  <button 
+                  <button
                     onClick={handlePhotoClick}
                     className="absolute bottom-0 right-0 p-2 bg-orange-500 text-white rounded-full shadow-lg hover:bg-orange-600 transition-all border-4 border-white"
                   >
@@ -355,11 +355,11 @@ export default function Profile() {
                   <User size={14} className="text-blue-500" />
                   Personal Information
                 </h4>
-                
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <label className="text-[10px] font-bold text-zinc-700 uppercase tracking-widest ml-1">First Name *</label>
-                    <input 
+                    <input
                       type="text"
                       value={formData.firstName}
                       onChange={(e) => setFormData(prev => ({ ...prev, firstName: e.target.value }))}
@@ -369,7 +369,7 @@ export default function Profile() {
                   </div>
                   <div className="space-y-2">
                     <label className="text-[10px] font-bold text-zinc-700 uppercase tracking-widest ml-1">Last Name *</label>
-                    <input 
+                    <input
                       type="text"
                       value={formData.lastName}
                       onChange={(e) => setFormData(prev => ({ ...prev, lastName: e.target.value }))}
@@ -382,7 +382,7 @@ export default function Profile() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <label className="text-[10px] font-bold text-zinc-700 uppercase tracking-widest ml-1">Nick Name</label>
-                    <input 
+                    <input
                       type="text"
                       value={formData.nickname}
                       onChange={(e) => setFormData(prev => ({ ...prev, nickname: e.target.value }))}
@@ -392,7 +392,7 @@ export default function Profile() {
                   </div>
                   <div className="space-y-2">
                     <label className="text-[10px] font-bold text-zinc-700 uppercase tracking-widest ml-1">NIC Number</label>
-                    <input 
+                    <input
                       type="text"
                       value={formData.nic}
                       onChange={(e) => setFormData(prev => ({ ...prev, nic: e.target.value }))}
@@ -405,7 +405,7 @@ export default function Profile() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <label className="text-[10px] font-bold text-zinc-700 uppercase tracking-widest ml-1">Email Address (Read Only)</label>
-                    <input 
+                    <input
                       type="email"
                       value={formData.email}
                       disabled
@@ -414,7 +414,7 @@ export default function Profile() {
                   </div>
                   <div className="space-y-2">
                     <label className="text-[10px] font-bold text-zinc-700 uppercase tracking-widest ml-1">Mobile Contact</label>
-                    <input 
+                    <input
                       type="text"
                       value={formData.phone}
                       onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
@@ -432,11 +432,11 @@ export default function Profile() {
                     <CreditCard size={14} className="text-purple-500" />
                     Bank Account Details
                   </h4>
-                  
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <label className="text-[10px] font-bold text-zinc-700 uppercase tracking-widest ml-1">Bank Name</label>
-                      <input 
+                      <input
                         type="text"
                         value={formData.bankName}
                         onChange={(e) => setFormData(prev => ({ ...prev, bankName: e.target.value }))}
@@ -446,7 +446,7 @@ export default function Profile() {
                     </div>
                     <div className="space-y-2">
                       <label className="text-[10px] font-bold text-zinc-700 uppercase tracking-widest ml-1">Branch Name</label>
-                      <input 
+                      <input
                         type="text"
                         value={formData.bankBranch}
                         onChange={(e) => setFormData(prev => ({ ...prev, bankBranch: e.target.value }))}
@@ -459,7 +459,7 @@ export default function Profile() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <label className="text-[10px] font-bold text-zinc-700 uppercase tracking-widest ml-1">Account Number</label>
-                      <input 
+                      <input
                         type="text"
                         value={formData.accountNo}
                         onChange={(e) => setFormData(prev => ({ ...prev, accountNo: e.target.value }))}
@@ -469,7 +469,7 @@ export default function Profile() {
                     </div>
                     <div className="space-y-2">
                       <label className="text-[10px] font-bold text-zinc-700 uppercase tracking-widest ml-1">Account Holder Name</label>
-                      <input 
+                      <input
                         type="text"
                         value={formData.accountHolderName}
                         onChange={(e) => setFormData(prev => ({ ...prev, accountHolderName: e.target.value }))}
@@ -484,13 +484,13 @@ export default function Profile() {
 
             {/* Modal Actions */}
             <div className="p-8 border-t border-zinc-100 flex items-center justify-end gap-3 bg-zinc-50/50">
-              <button 
+              <button
                 onClick={() => setIsEditing(false)}
                 className="px-6 py-3.5 text-sm font-bold text-zinc-500 hover:text-zinc-900 transition-all"
               >
                 Cancel
               </button>
-              <button 
+              <button
                 onClick={handleSave}
                 className="px-8 py-3.5 bg-orange-500 text-white rounded-2xl font-bold hover:bg-orange-600 transition-all shadow-lg shadow-orange-100 active:scale-95"
               >
