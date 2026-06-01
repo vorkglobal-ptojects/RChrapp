@@ -90,7 +90,7 @@ function exportPayslipsToPDF(payrolls: PayrollRecord[], monthIdx: number, year: 
     body: payrolls.map(p => [
       p.userName || 'Unknown',
       p.branch   || 'General',
-      `${months[p.month] ?? '?'} ${p.year}`,
+      `${months[p.month - 1] ?? '?'} ${p.year}`,
       p.bankName || '-',
       p.accountNo || '-',
       (p.salaryA    || 0).toLocaleString(),
@@ -548,7 +548,7 @@ export default function Payroll() {
                     </div>
                   </td>
                   <td className="px-8 py-5">
-                    <span className="text-sm font-bold text-zinc-700">{months[p.month] || 'Unknown'} {p.year}</span>
+                    <span className="text-sm font-bold text-zinc-700">{months[p.month - 1] || 'Unknown'} {p.year}</span>
                   </td>
                   {(!p.bankName && !p.accountNo) ? (
                     <td colSpan={4} className="px-8 py-5 text-sm font-bold text-red-500 text-center italic">
