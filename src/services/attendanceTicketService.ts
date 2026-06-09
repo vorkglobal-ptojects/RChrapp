@@ -70,6 +70,23 @@ export async function updateTicketStatus(ticketId: string, status: AttendanceTic
 
   // If approved, apply the fix to the attendance table
   if (status === 'Approved' && ticket) {
+    // Helper to calculate late/early
+    const isTimeLate = (isoString: string) => {
+      if (!isoString) return false;
+      const date = new Date(isoString);
+      const hour = date.getHours();
+      const minute = date.getMinutes();
+      return hour > 9 || (hour === 9 && minute > 10);
+    };
+
+    const isTimeEarlyOut = (isoString: string) => {
+      if (!isoString) return false;
+      const date = new Date(isoString);
+      const hour = date.getHours();
+      const minute = date.getMinutes();
+      return hour < 17 || (hour === 17 && minute < 30);
+    };
+
     // Check if attendance record exists for that date
     const { data: attendanceData } = await supabase
       .from('attendance')
@@ -83,9 +100,11 @@ export async function updateTicketStatus(ticketId: string, status: AttendanceTic
       const updatePayload: any = {};
       if (ticket.type === 'Check-In' || ticket.type === 'Both') {
         updatePayload.check_in = ticket.requested_time;
+        updatePayload.is_late = isTimeLate(ticket.requested_time);
       }
       if (ticket.type === 'Check-Out' || ticket.type === 'Both') {
         updatePayload.check_out = ticket.requested_check_out;
+        updatePayload.is_early_out = isTimeEarlyOut(ticket.requested_check_out);
       }
       
       const { error: attUpdateErr } = await supabase
@@ -96,15 +115,18 @@ export async function updateTicketStatus(ticketId: string, status: AttendanceTic
       if (attUpdateErr) throw attUpdateErr;
     } else {
       // Insert new record if it doesn't exist
+      const checkInTime = ticket.type === 'Check-Out' ? new Date().toISOString() : ticket.requested_time;
+      const checkOutTime = (ticket.type === 'Check-Out' || ticket.type === 'Both') ? ticket.requested_check_out : null;
+
       const { error: attInsertErr } = await supabase
         .from('attendance')
         .insert({
           user_id: ticket.user_id,
           date: ticket.date,
-          check_in: ticket.type === 'Check-Out' ? new Date().toISOString() : ticket.requested_time,
-          check_out: (ticket.type === 'Check-Out' || ticket.type === 'Both') ? ticket.requested_check_out : null,
-          is_late: false,
-          is_early_out: false
+          check_in: checkInTime,
+          check_out: checkOutTime,
+          is_late: isTimeLate(checkInTime),
+          is_early_out: checkOutTime ? isTimeEarlyOut(checkOutTime) : false
         });
         
       if (attInsertErr) throw attInsertErr;
