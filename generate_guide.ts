@@ -33,12 +33,26 @@ function generateGuide() {
   doc.font('Helvetica').text('Click the black "New Request" button. A modal will appear.');
   doc.moveDown();
 
+  const dashPath = path.join(process.cwd(), 'dashboard_screenshot.png');
+  if (fs.existsSync(dashPath)) {
+    doc.image(dashPath, { fit: [500, 300], align: 'center' });
+    doc.moveDown(2);
+  }
+
+  doc.addPage();
+
   doc.font('Helvetica-Bold').text('Step 3: Fill out the details');
   doc.font('Helvetica').text('- Select the Date you missed the log.');
   doc.text('- Select the "Missing Action" (Missed Check-In, Missed Check-Out, or Missed Both).');
   doc.text('- Enter the correct time you intended to check in or out.');
   doc.text('- Provide a short reason explaining what happened.');
   doc.moveDown();
+
+  const modalPath = path.join(process.cwd(), 'modal_screenshot.png');
+  if (fs.existsSync(modalPath)) {
+    doc.image(modalPath, { fit: [400, 400], align: 'center' });
+    doc.moveDown(2);
+  }
 
   doc.font('Helvetica-Bold').text('Step 4: Submit');
   doc.font('Helvetica').text('Click "Submit Request". Your manager or HR will review and approve it. Once approved, your attendance log will be automatically updated.');

@@ -217,22 +217,28 @@ export default function Attendance() {
             </div>
           </div>
         </div>
-        <div className="flex flex-col md:flex-row md:items-center gap-4">
-          <div className="bg-zinc-100 p-1 rounded-2xl flex mr-2">
-            <button
-              onClick={() => setActiveTab('Logs')}
-              className={cn("px-4 py-2 rounded-xl text-sm font-bold transition-all", activeTab === 'Logs' ? "bg-white text-zinc-900 shadow-sm" : "text-zinc-500 hover:text-zinc-700")}
-            >
-              Logs
-            </button>
-            <button
-              onClick={() => setActiveTab('Tickets')}
-              className={cn("px-4 py-2 rounded-xl text-sm font-bold transition-all", activeTab === 'Tickets' ? "bg-white text-zinc-900 shadow-sm" : "text-zinc-500 hover:text-zinc-700")}
-            >
-              Requests
-            </button>
-          </div>
-          {(user?.role === 'employee' || user?.role === 'hr') && (
+        <div className="bg-zinc-100 p-1 rounded-2xl flex w-full md:w-auto mt-4 md:mt-0">
+          <button
+            onClick={() => setActiveTab('Logs')}
+            className={cn("flex-1 md:flex-none px-6 py-2.5 rounded-xl text-sm font-bold transition-all", activeTab === 'Logs' ? "bg-white text-zinc-900 shadow-sm" : "text-zinc-500 hover:text-zinc-700")}
+          >
+            Logs
+          </button>
+          <button
+            onClick={() => setActiveTab('Tickets')}
+            className={cn("flex-1 md:flex-none px-6 py-2.5 rounded-xl text-sm font-bold transition-all", activeTab === 'Tickets' ? "bg-white text-zinc-900 shadow-sm" : "text-zinc-500 hover:text-zinc-700")}
+          >
+            Requests
+          </button>
+        </div>
+      </div>
+
+      {activeTab === 'Logs' ? (
+        <div className="space-y-6 animate-in fade-in duration-300">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <h2 className="text-xl font-bold text-zinc-900 hidden sm:block">Today's Activity</h2>
+            <div className="flex flex-col sm:flex-row sm:items-center gap-4 w-full sm:w-auto">
+              {(user?.role === 'employee' || user?.role === 'hr') && (
             <div className="flex gap-2">
               <button 
                 onClick={async () => {
@@ -275,7 +281,7 @@ export default function Attendance() {
           )}
           <button 
             onClick={handleExport}
-            className="bg-white border border-zinc-200 text-zinc-600 px-4 py-3 rounded-2xl font-bold flex items-center gap-2 hover:bg-zinc-50 transition-all"
+            className="bg-white border border-zinc-200 text-zinc-600 px-4 py-3 w-full sm:w-auto justify-center rounded-2xl font-bold flex items-center gap-2 hover:bg-zinc-50 transition-all"
           >
             <Download size={18} />
             Export Logs
@@ -313,9 +319,6 @@ export default function Attendance() {
           <p className="text-2xl font-black text-zinc-900">{filteredRecords.filter(r => r.checkOut).length}</p>
         </div>
       </div>
-
-      {activeTab === 'Logs' ? (
-        <>
           {/* Filters (Only for Admin/HR) */}
           {(user?.role !== 'employee') && (
         <div className="bg-white p-4 rounded-4xl border border-zinc-100 shadow-sm flex flex-col md:flex-row gap-4">
@@ -418,7 +421,7 @@ export default function Attendance() {
           </table>
         </div>
       </div>
-        </>
+        </div>
       ) : (
         <div className="space-y-6">
           <div className="flex justify-between items-center bg-white p-4 rounded-4xl border border-zinc-100 shadow-sm">
