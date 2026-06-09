@@ -210,3 +210,27 @@ CREATE POLICY "Users can delete their own avatar" ON storage.objects FOR DELETE 
   bucket_id = 'avatars' AND 
   (storage.foldername(name))[1] = auth.uid()::text
 );
+
+-- 7. Create attendance tickets table
+CREATE TABLE public.attendance_tickets (
+  id BIGSERIAL PRIMARY KEY,
+  user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
+  date DATE NOT NULL,
+  type TEXT NOT NULL CHECK (type IN ('Check-In', 'Check-Out', 'Both')),
+  requested_time TIMESTAMP WITH TIME ZONE,
+  requested_check_out TIMESTAMP WITH TIME ZONE,
+  reason TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'Pending' CHECK (status IN ('Pending', 'Approved', 'Rejected')),
+  approved_by UUID REFERENCES public.profiles(id),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+ALTER TABLE public.attendance_tickets ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users view own attendance tickets" ON public.attendance_tickets FOR SELECT USING (auth.uid() = user_id OR is_management());
+CREATE POLICY "Users insert own attendance tickets" ON public.attendance_tickets FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users update own pending attendance tickets" ON public.attendance_tickets FOR UPDATE USING (auth.uid() = user_id AND status = 'Pending');
+CREATE POLICY "Users delete own pending attendance tickets" ON public.attendance_tickets FOR DELETE USING (auth.uid() = user_id AND status = 'Pending');
+CREATE POLICY "Management manage attendance tickets" ON public.attendance_tickets FOR ALL USING (is_management());
+

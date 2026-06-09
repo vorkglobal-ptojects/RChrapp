@@ -54,6 +54,27 @@ export interface AttendanceRecord {
   isEarlyOut: boolean;
 }
 
+export type AttendanceTicketStatus = 'Pending' | 'Approved' | 'Rejected';
+
+export interface AttendanceTicket {
+  id?: string;
+  userId: string;
+  date: string;
+  type: 'Check-In' | 'Check-Out' | 'Both';
+  requestedTime?: any;
+  requestedCheckOut?: any;
+  reason: string;
+  status: AttendanceTicketStatus;
+  approvedBy?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  // Included from join
+  user?: {
+    name: string;
+    branch: string;
+  };
+}
+
 export type LeaveType = 'Annual' | 'Sick' | 'Casual' | 'Short';
 export type LeaveStatus = 'Pending' | 'Approved' | 'Rejected' | 'Cancelled';
 
