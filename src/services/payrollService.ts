@@ -43,12 +43,14 @@ export async function generatePayroll(month: number, year: number): Promise<void
   const { data: existing, error: pError } = await supabase.from('payroll').select('user_id').eq('month', month).eq('year', year);
   if (pError) throw pError;
 
+  const existingSet = new Set(existing?.map(p => p.user_id) || []);
+  const toInsert = [];
+
   for (const emp of employees) {
     if (['super', 'owner'].includes(emp.role)) continue;
     
-    const exists = existing?.find(p => p.user_id === emp.uid);
-    if (!exists) {
-      const { error } = await supabase.from('payroll').insert({
+    if (!existingSet.has(emp.uid)) {
+      toInsert.push({
         user_id: emp.uid,
         month,
         year,
@@ -64,7 +66,14 @@ export async function generatePayroll(month: number, year: number): Promise<void
         status: 'Pending',
         branch: emp.branch
       });
-      if (error) console.error(`Failed to generate payroll for ${emp.uid}`, error);
+    }
+  }
+
+  if (toInsert.length > 0) {
+    const { error } = await supabase.from('payroll').insert(toInsert);
+    if (error) {
+      console.error('Failed to generate payroll batch', error);
+      throw error;
     }
   }
 }

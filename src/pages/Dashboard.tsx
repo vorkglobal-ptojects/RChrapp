@@ -531,8 +531,8 @@ export default function Dashboard() {
                   {isAdmin ? 'Company Resources' : 'My Leave Status'}
                 </h3>
               </div>
-              <div className="h-48 relative">
-                <ResponsiveContainer width="100%" height="100%">
+              <div className="h-48 relative min-h-[192px] min-w-[1px]">
+                <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1}>
                   <PieChart>
                     <Pie
                       data={user ? [
@@ -596,8 +596,8 @@ export default function Dashboard() {
                   {isAdmin ? 'System Load' : 'Weekly Activity'}
                 </h3>
               </div>
-              <div className="h-48">
-                <ResponsiveContainer width="100%" height="100%">
+              <div className="h-48 relative min-h-[192px] min-w-[1px]">
+                <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1}>
                   <BarChart data={attendanceData}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f4f4f5" />
                     <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#a1a1aa' }} />
