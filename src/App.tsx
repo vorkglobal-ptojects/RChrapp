@@ -80,7 +80,35 @@ function AppRoutes() {
   );
 }
 
+import { isSupabaseConfigured } from './lib/supabase';
+
 export default function App() {
+  if (!isSupabaseConfigured) {
+    return (
+      <div className="min-h-screen bg-zinc-950 flex items-center justify-center p-6 text-zinc-100">
+        <div className="max-w-md w-full bg-zinc-900 border border-zinc-800 rounded-3xl p-8 space-y-6 shadow-2xl">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-orange-500/20 text-orange-500 flex items-center justify-center font-black text-lg">!</div>
+            <div>
+              <h2 className="text-lg font-black text-white">Supabase Setup Required</h2>
+              <p className="text-xs text-zinc-400">Environment variables missing on Vercel</p>
+            </div>
+          </div>
+          <p className="text-xs text-zinc-400 leading-relaxed">
+            Your Vercel deployment needs the following Environment Variables to connect to the database:
+          </p>
+          <div className="space-y-2 bg-zinc-950 p-4 rounded-2xl border border-zinc-800/80 font-mono text-xs">
+            <div className="text-orange-400 font-bold">VITE_SUPABASE_URL</div>
+            <div className="text-orange-400 font-bold">VITE_SUPABASE_ANON_KEY</div>
+          </div>
+          <p className="text-xs text-zinc-400 leading-relaxed">
+            Go to <b>Vercel Project Settings &gt; Environment Variables</b>, add these keys, and then redeploy.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <AuthProvider>
       <Router>
