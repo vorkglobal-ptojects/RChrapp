@@ -29,13 +29,13 @@ function exportPayslipsToPDF(payrolls: PayrollRecord[], monthIdx: number, year: 
   });
 
   // ── Header bar ──────────────────────────────────────────────────────────────
-  doc.setFillColor(24, 24, 27); // zinc-900
+  doc.setFillColor(11, 30, 54); // brand navy #0B1E36
   doc.rect(0, 0, 297, 22, 'F');
 
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(14);
-  doc.setTextColor(255, 255, 255);
-  doc.text('HR PULSE', 14, 14);
+  doc.setFontSize(13);
+  doc.setTextColor(197, 160, 89); // brand gold #C5A059
+  doc.text('RUPASINGHE CAPITAL HR', 14, 14);
 
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(9);
@@ -175,7 +175,7 @@ function exportPayslipsToPDF(payrolls: PayrollRecord[], monthIdx: number, year: 
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(7);
   doc.setTextColor(161, 161, 170);
-  doc.text('HR PULSE  ·  Confidential Payroll Document', 10, pageHeight - 5);
+  doc.text('RUPASINGHE CAPITAL HR  ·  Confidential Payroll Document', 10, pageHeight - 5);
   doc.text(`Page 1`, 287, pageHeight - 5, { align: 'right' });
 
   doc.save(`Payroll_${monthName}_${year}.pdf`);

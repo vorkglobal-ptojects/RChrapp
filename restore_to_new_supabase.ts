@@ -5,13 +5,16 @@ import path from 'path';
 
 dotenv.config();
 
-// When restoring to the new project, you can provide NEW_SUPABASE_URL and NEW_SUPABASE_SERVICE_ROLE_KEY
-// in your .env or as environment variables.
-const targetUrl = process.env.NEW_SUPABASE_URL || process.env.VITE_SUPABASE_URL!;
-const targetKey = process.env.NEW_SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY!;
+const targetUrl = process.env.VITE_SUPABASE_URL!;
+const targetKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+
+console.log(`Target URL: ${targetUrl}`);
+if (!targetUrl || !targetKey) {
+  console.error('Missing target credentials in .env');
+  process.exit(1);
+}
 
 const backupFile = path.join(process.cwd(), 'backup_data', 'supabase_backup_complete.json');
-
 if (!fs.existsSync(backupFile)) {
   console.error('❌ Backup file not found at:', backupFile);
   process.exit(1);
@@ -24,7 +27,7 @@ const targetSupabase = createClient(targetUrl, targetKey, {
 });
 
 async function restore() {
-  console.log(`🚀 Starting Full Restore to Target Supabase: ${targetUrl}\n`);
+  console.log(`\n🚀 Starting Full Restore to Target Supabase: ${targetUrl}\n`);
 
   // 1. Restore Auth Users
   console.log(`1. Restoring ${backup.authUsers.length} Auth Users...`);
@@ -36,17 +39,24 @@ async function restore() {
   for (const user of backup.authUsers) {
     const email = user.email?.toLowerCase();
     if (!email) continue;
+    const pwd = user.known_password || 'employee123';
 
     if (existingEmailMap.has(email)) {
       const existingId = existingEmailMap.get(email)!;
       userIdMap.set(user.id, existingId);
-      console.log(`   ↳ User ${email} already exists (${existingId}).`);
+      // Ensure password is updated
+      await targetSupabase.auth.admin.updateUserById(existingId, {
+        password: pwd,
+        email_confirm: true,
+        user_metadata: user.user_metadata
+      });
+      console.log(`   ↳ User ${email} already exists (${existingId}) -> Updated password & metadata.`);
     } else {
       try {
         const { data: newUser, error: createErr } = await targetSupabase.auth.admin.createUser({
           id: user.id, // Preserves the exact same UUID
           email: user.email,
-          password: user.known_password || 'employee123',
+          password: pwd,
           email_confirm: true,
           user_metadata: user.user_metadata
         });
@@ -55,7 +65,7 @@ async function restore() {
           // If specifying ID isn't permitted on target, fallback without ID
           const fallback = await targetSupabase.auth.admin.createUser({
             email: user.email,
-            password: user.known_password || 'employee123',
+            password: pwd,
             email_confirm: true,
             user_metadata: user.user_metadata
           });
@@ -85,13 +95,18 @@ async function restore() {
     console.log(`   Inserting ${rows.length} rows into '${tableName}' in batches of ${batchSize}...`);
     for (let i = 0; i < rows.length; i += batchSize) {
       const chunk = rows.slice(i, i + batchSize).map(row => {
-        // Map user_id if needed
         const mapped = { ...row };
         if (mapped.user_id && userIdMap.has(mapped.user_id)) {
           mapped.user_id = userIdMap.get(mapped.user_id);
         }
         if (mapped.id && tableName === 'profiles' && userIdMap.has(mapped.id)) {
           mapped.id = userIdMap.get(mapped.id);
+        }
+        if (mapped.approved_by && userIdMap.has(mapped.approved_by)) {
+          mapped.approved_by = userIdMap.get(mapped.approved_by);
+        }
+        if (mapped.evaluator_id && userIdMap.has(mapped.evaluator_id)) {
+          mapped.evaluator_id = userIdMap.get(mapped.evaluator_id);
         }
         return mapped;
       });
@@ -125,26 +140,40 @@ async function restore() {
       if (!fs.statSync(bDir).isDirectory()) continue;
 
       // Ensure bucket exists on target
-      await targetSupabase.storage.createBucket(b, { public: true });
-
-      function uploadRec(currPath: string, relPath: string) {
-        const items = fs.readdirSync(currPath);
-        for (const item of items) {
-          const itemPath = path.join(currPath, item);
-          const itemRel = relPath ? `${relPath}/${item}` : item;
-          if (fs.statSync(itemPath).isDirectory()) {
-            uploadRec(itemPath, itemRel);
-          } else {
-            const fileBuf = fs.readFileSync(itemPath);
-            targetSupabase.storage.from(b).upload(itemRel, fileBuf, { upsert: true }).then(({ error }) => {
-              if (error) console.error(`   ❌ Failed to upload ${b}/${itemRel}:`, error.message);
-              else console.log(`   ✅ Uploaded ${b}/${itemRel}`);
-            });
-          }
-        }
+      const { error: bErr } = await targetSupabase.storage.createBucket(b, { public: true });
+      if (bErr && !bErr.message.includes('already exists')) {
+        console.log(`   Bucket info (${b}):`, bErr.message);
+      } else {
+        console.log(`   Bucket '${b}' ready.`);
       }
 
-      uploadRec(bDir, '');
+      function getAllFiles(dir: string, base: string = ''): string[] {
+        let results: string[] = [];
+        const list = fs.readdirSync(dir);
+        for (const file of list) {
+          const filePath = path.join(dir, file);
+          const relPath = base ? `${base}/${file}` : file;
+          const stat = fs.statSync(filePath);
+          if (stat.isDirectory()) {
+            results = results.concat(getAllFiles(filePath, relPath));
+          } else {
+            results.push(relPath);
+          }
+        }
+        return results;
+      }
+
+      const files = getAllFiles(bDir);
+      for (const rel of files) {
+        const filePath = path.join(bDir, rel);
+        const fileBuf = fs.readFileSync(filePath);
+        const { error: upErr } = await targetSupabase.storage.from(b).upload(rel, fileBuf, { upsert: true });
+        if (upErr) {
+          console.error(`   ❌ Failed to upload ${b}/${rel}:`, upErr.message);
+        } else {
+          console.log(`   ✅ Uploaded ${b}/${rel}`);
+        }
+      }
     }
   }
 

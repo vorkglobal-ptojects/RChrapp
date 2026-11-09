@@ -60,7 +60,10 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
         <div className="p-6 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Logo size="md" />
-            <h1 className="text-xl font-black tracking-tight text-zinc-900">HR PULSE</h1>
+            <div className="leading-tight">
+              <h1 className="text-sm font-black tracking-tight text-[#0B1E36]">RUPASINGHE</h1>
+              <span className="text-[10px] font-black tracking-widest text-[#C5A059] block">CAPITAL HR</span>
+            </div>
           </div>
           <button 
             onClick={onClose}

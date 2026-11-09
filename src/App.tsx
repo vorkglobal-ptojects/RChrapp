@@ -46,7 +46,10 @@ const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
             <Menu size={24} />
           </button>
             <Logo size="sm" />
-            <span className="ml-3 font-black text-zinc-900 tracking-tight">HR PULSE</span>
+            <div className="ml-2 leading-tight">
+              <span className="font-black text-[#0B1E36] tracking-tight text-xs block">RUPASINGHE</span>
+              <span className="font-extrabold text-[#C5A059] tracking-widest text-[9px] block">CAPITAL HR</span>
+            </div>
         </header>
         <main className="flex-1 p-4 md:p-8 lg:p-12 overflow-y-auto max-h-screen">
           <div className="max-w-7xl mx-auto">

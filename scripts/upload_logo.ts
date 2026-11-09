@@ -1,9 +1,16 @@
-import { supabase } from '../src/lib/supabase';
+import dotenv from 'dotenv';
+dotenv.config();
+import { createClient } from '@supabase/supabase-js';
 import fs from 'fs';
 import path from 'path';
 
+const supabase = createClient(
+  process.env.VITE_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
+
 async function uploadLogo() {
-  const logoPath = path.resolve(__dirname, '../src/assets/logo.png');
+  const logoPath = path.resolve(process.cwd(), 'src/assets/logo.png');
   const fileBuffer = fs.readFileSync(logoPath);
 
   // 1. Create branding bucket if it doesn't exist

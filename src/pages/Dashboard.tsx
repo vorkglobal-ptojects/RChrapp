@@ -398,7 +398,7 @@ export default function Dashboard() {
     }
   });
 
-  if (loading) return <div className="p-8 text-center text-zinc-400 font-bold">Syncing HR Pulse...</div>;
+  if (loading) return <div className="p-8 text-center text-zinc-400 font-bold">Syncing Rupasinghe Capital HR...</div>;
 
   const greeting = getGreeting();
   const isAdmin = user?.role === 'owner' || user?.role === 'super' || user?.role === 'hr';
