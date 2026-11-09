@@ -8,3 +8,34 @@ coverage/
 !.env.example
 service-account.json
 *.zip
+
+# Sensitive backups, scratch, and local assets
+backup_data/
+scratch/
+scripts/
+*.pdf
+dashboard_screenshot.png
+modal_screenshot.png
+
+# Admin and database migration scripts (keep local only)
+apply_schema.ts
+restore_data_perfect.ts
+restore_to_new_supabase.ts
+backup_supabase.ts
+bulk_add_employees.ts
+capture_screenshots.ts
+check_logins.ts
+confirm_users.ts
+consolidate_profiles_v2.ts
+fix_*.ts
+full_data_reset.ts
+generate_*.ts
+scratch_fix_profile.ts
+seed_*.ts
+server.ts
+setup_final_admins.ts
+sync_final_profiles.ts
+update_march_payroll.ts
+verify_admins.ts
+add_bank_columns.ts
+schema.sql
