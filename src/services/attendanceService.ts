@@ -1,5 +1,6 @@
 import { supabase } from '../lib/supabase';
-import { AttendanceRecord } from '../types';
+import { AttendanceRecord, UserProfile } from '../types';
+import { isMainAdmin, isITTeamMember } from '../lib/utils';
 
 /**
  * Helper to get current time in Asia/Colombo for display, 
@@ -9,22 +10,29 @@ export function getColomboTime(date: Date = new Date()): string {
   return date.toLocaleString('en-US', { timeZone: 'Asia/Colombo' });
 }
 
-export async function getAttendance(userId?: string): Promise<AttendanceRecord[]> {
-  let query = supabase.from('attendance').select('*');
+export async function getAttendance(userId?: string, currentUser?: UserProfile | null): Promise<AttendanceRecord[]> {
+  let query = supabase.from('attendance').select('*, profiles:user_id(branch)');
   if (userId) query = query.eq('user_id', userId);
   
   const { data, error } = await query.order('date', { ascending: false });
   if (error) throw error;
 
-  return (data || []).map(d => ({
+  let records = (data || []).map((d: any) => ({
     id: d.id,
     userId: d.user_id,
     date: d.date,
     checkIn: d.check_in,
     checkOut: d.check_out,
     isLate: d.is_late,
-    isEarlyOut: d.is_early_out
+    isEarlyOut: d.is_early_out,
+    branch: d.profiles?.branch
   }));
+
+  if (currentUser && !isMainAdmin(currentUser)) {
+    records = records.filter((r: any) => !isITTeamMember(r) || r.userId === currentUser.uid);
+  }
+
+  return records;
 }
 
 export async function checkIn(userId: string): Promise<void> {

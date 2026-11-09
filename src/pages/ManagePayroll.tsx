@@ -31,14 +31,14 @@ export default function ManagePayroll() {
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [user]);
 
   const loadData = async () => {
     setLoading(true);
     try {
       const [payrollData, employeeData] = await Promise.all([
-        payrollService.getPayroll(),
-        userService.getEmployees()
+        payrollService.getPayroll(undefined, user),
+        userService.getEmployees(user)
       ]);
       setPayrolls(payrollData || []);
       setEmployees(employeeData || []);

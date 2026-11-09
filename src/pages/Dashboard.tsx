@@ -76,9 +76,9 @@ export default function Dashboard() {
       const isManagement = user.role === 'hr' || user.role === 'owner' || user.role === 'super';
       
       const [empData, leaveData, attendanceData, taskData] = await Promise.all([
-        userService.getEmployees(),
-        leaveService.getLeaves(isManagement ? undefined : uid),
-        attendanceService.getAttendance(isManagement ? undefined : uid),
+        userService.getEmployees(user),
+        leaveService.getLeaves(isManagement ? undefined : uid, user),
+        attendanceService.getAttendance(isManagement ? undefined : uid, user),
         taskService.getTasks(selectedTaskUserId || uid!)
       ]);
 

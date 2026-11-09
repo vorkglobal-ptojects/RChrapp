@@ -3,13 +3,13 @@
   "version": "0.0.0",
   "private": true,
   "description": "A high-performance Human Resources dashboard and scheduling system designed for **Aurum Studio**. Built with **React**, **TypeScript**, and **Firebase**, this platform provides real-time analytics and automated staff management.",
-  "homepage": "https://github.com/Dinushastargirl/HRH#readme",
+  "homepage": "https://github.com/vorkglobal-ptojects/RChrapp#readme",
   "bugs": {
-    "url": "https://github.com/Dinushastargirl/HRH/issues"
+    "url": "https://github.com/vorkglobal-ptojects/RChrapp/issues"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Dinushastargirl/HRH.git"
+    "url": "git+https://github.com/vorkglobal-ptojects/RChrapp.git"
   },
   "license": "ISC",
   "author": "",

@@ -1,5 +1,6 @@
 import { supabase } from '../lib/supabase';
 import { UserProfile } from '../types';
+import { isMainAdmin, isITTeamMember } from '../lib/utils';
 
 export function mapProfile(data: any): UserProfile {
   return {
@@ -36,25 +37,54 @@ export function mapProfile(data: any): UserProfile {
   };
 }
 
-export async function getEmployees(): Promise<UserProfile[]> {
+export async function getEmployees(currentUser?: UserProfile | null): Promise<UserProfile[]> {
   const { data, error } = await supabase
     .from('profiles')
     .select('*')
     .order('sort_order', { ascending: true });
   
   if (error) throw error;
-  return (data || []).map(mapProfile);
+  let list = (data || []).map(mapProfile);
+
+  // If currentUser is passed and NOT main admin (super), hide IT Team members (unless it's the caller themselves)
+  if (currentUser) {
+    if (!isMainAdmin(currentUser)) {
+      list = list.filter(p => !isITTeamMember(p) || p.uid === currentUser.uid);
+    }
+    return list;
+  }
+
+  // Fallback: check session if currentUser not explicitly passed
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.user) {
+      const caller = list.find(p => p.uid === session.user.id);
+      if (caller && !isMainAdmin(caller)) {
+        list = list.filter(p => !isITTeamMember(p) || p.uid === session.user.id);
+      }
+    }
+  } catch (err) {
+    console.error('Session check error in getEmployees:', err);
+  }
+
+  return list;
 }
 
-export async function getEmployee(uid: string): Promise<UserProfile | null> {
+export async function getEmployee(uid: string, currentUser?: UserProfile | null): Promise<UserProfile | null> {
   const { data, error } = await supabase
     .from('profiles')
     .select('*')
     .eq('id', uid)
     .single();
   
-  if (error) return null;
-  return mapProfile(data);
+  if (error || !data) return null;
+  const profile = mapProfile(data);
+  if (isITTeamMember(profile)) {
+    if (currentUser && !isMainAdmin(currentUser) && currentUser.uid !== profile.uid) {
+      return null;
+    }
+  }
+  return profile;
 }
 
 export async function saveEmployee(emp: UserProfile): Promise<void> {

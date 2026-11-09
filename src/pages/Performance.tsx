@@ -24,7 +24,7 @@ export default function Performance() {
   useEffect(() => {
     const loadEmps = async () => {
       try {
-        const emps = await userService.getEmployees();
+        const emps = await userService.getEmployees(user);
         setEmployees(emps || []);
         if (!selectedEmp && emps && emps.length > 0) {
           const initial = user?.role === 'employee' ? emps.find(e => e.uid === user.uid) || emps[0] : emps[0];

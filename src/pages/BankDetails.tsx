@@ -26,7 +26,7 @@ export default function BankDetails() {
     if (!user) return;
     setLoading(true);
     try {
-      const data = await userService.getEmployees();
+      const data = await userService.getEmployees(user);
       // Filter out super admins as they don't submit bank details
       const filteredData = (data || []).filter(emp => emp.role !== 'super');
       setEmployees(filteredData);

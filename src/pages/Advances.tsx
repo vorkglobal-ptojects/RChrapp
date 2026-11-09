@@ -29,7 +29,7 @@ export default function Advances() {
     setLoading(true);
     try {
       const isManagement = user.role === 'hr' || user.role === 'owner' || user.role === 'super';
-      const data = await advanceService.getAdvances(isManagement ? undefined : user.uid);
+      const data = await advanceService.getAdvances(isManagement ? undefined : user.uid, user);
       setAdvances(data || []);
     } catch (err) {
       console.error('Error loading advances:', err);

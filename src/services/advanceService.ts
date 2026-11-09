@@ -1,17 +1,18 @@
 import { supabase } from '../lib/supabase';
-import { AdvanceRequest } from '../types';
+import { AdvanceRequest, UserProfile } from '../types';
+import { isMainAdmin, isITTeamMember } from '../lib/utils';
 
-export async function getAdvances(userId?: string): Promise<AdvanceRequest[]> {
+export async function getAdvances(userId?: string, currentUser?: UserProfile | null): Promise<AdvanceRequest[]> {
   let query = supabase
     .from('advance_requests')
-    .select('*, profiles:user_id(name, role, photo_url), approver:approved_by(name)');
+    .select('*, profiles:user_id(name, role, branch, photo_url), approver:approved_by(name)');
   
   if (userId) query = query.eq('user_id', userId);
   
   const { data, error } = await query.order('created_at', { ascending: false });
   if (error) throw error;
 
-  return (data || []).map(d => ({
+  let records = (data || []).map(d => ({
     id: d.id,
     userId: d.user_id,
     amount: Number(d.amount),
@@ -22,8 +23,15 @@ export async function getAdvances(userId?: string): Promise<AdvanceRequest[]> {
     updatedAt: d.updated_at,
     userName: (d.profiles as any)?.name || 'Unknown',
     userRole: (d.profiles as any)?.role || 'employee',
-    userPhoto: (d.profiles as any)?.photo_url
+    userPhoto: (d.profiles as any)?.photo_url,
+    branch: (d.profiles as any)?.branch
   }));
+
+  if (currentUser && !isMainAdmin(currentUser)) {
+    records = records.filter(a => !isITTeamMember(a) || a.userId === currentUser.uid);
+  }
+
+  return records;
 }
 
 export async function submitAdvance(advance: Partial<AdvanceRequest>): Promise<void> {

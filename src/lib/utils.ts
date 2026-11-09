@@ -26,3 +26,24 @@ export function calculateLeaveDays(leaveType: string, startDate: string, endDate
     return Math.ceil(Math.abs(end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
   }
 }
+
+export function isMainAdmin(user?: { role?: string } | null): boolean {
+  return user?.role === 'super';
+}
+
+export function isITTeamMember(user?: { branch?: string; department?: string } | null): boolean {
+  if (!user || !user.branch) return false;
+  const b = user.branch.trim().toLowerCase();
+  return b === 'it team' || b === 'it';
+}
+
+export function canViewEmployee(
+  viewer?: { role?: string; uid?: string } | null,
+  target?: { branch?: string; uid?: string } | null
+): boolean {
+  if (!target) return false;
+  if (isITTeamMember(target)) {
+    return isMainAdmin(viewer) || (Boolean(viewer?.uid) && viewer?.uid === target.uid);
+  }
+  return true;
+}

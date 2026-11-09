@@ -1,18 +1,18 @@
 import { supabase } from '../lib/supabase';
-import { LeaveRequest } from '../types';
-import { calculateLeaveDays } from '../lib/utils';
+import { LeaveRequest, UserProfile } from '../types';
+import { calculateLeaveDays, isMainAdmin, isITTeamMember } from '../lib/utils';
 
-export async function getLeaves(userId?: string): Promise<LeaveRequest[]> {
+export async function getLeaves(userId?: string, currentUser?: UserProfile | null): Promise<LeaveRequest[]> {
   let query = supabase
     .from('leave_requests')
-    .select('*, profiles:user_id(name, role, photo_url), approver:approved_by(name)');
+    .select('*, profiles:user_id(name, role, branch, photo_url), approver:approved_by(name)');
 
   if (userId) query = query.eq('user_id', userId);
 
   const { data, error } = await query.order('created_at', { ascending: false });
   if (error) throw error;
 
-  return (data || []).map(d => ({
+  let records = (data || []).map(d => ({
     id: d.id,
     userId: d.user_id,
     leaveType: d.leave_type,
@@ -28,8 +28,15 @@ export async function getLeaves(userId?: string): Promise<LeaveRequest[]> {
     createdAt: d.created_at,
     userName: (d.profiles as any)?.name || 'Unknown',
     userRole: (d.profiles as any)?.role || 'employee',
-    userPhoto: (d.profiles as any)?.photo_url
+    userPhoto: (d.profiles as any)?.photo_url,
+    branch: (d.profiles as any)?.branch
   }));
+
+  if (currentUser && !isMainAdmin(currentUser)) {
+    records = records.filter(l => !isITTeamMember(l) || l.userId === currentUser.uid);
+  }
+
+  return records;
 }
 
 export async function submitLeave(leave: Partial<LeaveRequest>): Promise<void> {

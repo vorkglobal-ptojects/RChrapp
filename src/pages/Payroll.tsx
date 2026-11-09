@@ -234,7 +234,7 @@ export default function Payroll() {
     setLoading(true);
     try {
       const isManagement = user.role === 'hr' || user.role === 'owner' || user.role === 'super';
-      const data = await payrollService.getPayroll(isManagement ? undefined : user.uid);
+      const data = await payrollService.getPayroll(isManagement ? undefined : user.uid, user);
       setPayrolls(data || []);
     } catch (err) {
       console.error('Error loading payrolls:', err);

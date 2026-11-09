@@ -43,7 +43,7 @@ export default function Leaves() {
         await leaveService.rejectExpiredLeaves();
       }
 
-      const data = await leaveService.getLeaves(isManagement ? undefined : user.uid);
+      const data = await leaveService.getLeaves(isManagement ? undefined : user.uid, user);
       setLeaves(data || []);
     } catch (err) {
       console.error('Error loading leaves:', err);

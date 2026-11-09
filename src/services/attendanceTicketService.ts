@@ -1,7 +1,8 @@
 import { supabase } from '../lib/supabase';
-import { AttendanceTicket, AttendanceTicketStatus } from '../types';
+import { AttendanceTicket, AttendanceTicketStatus, UserProfile } from '../types';
+import { isMainAdmin, isITTeamMember } from '../lib/utils';
 
-export async function getTickets(userId?: string): Promise<AttendanceTicket[]> {
+export async function getTickets(userId?: string, currentUser?: UserProfile | null): Promise<AttendanceTicket[]> {
   let query = supabase.from('attendance_tickets').select(`
     *,
     user:user_id (
@@ -17,7 +18,7 @@ export async function getTickets(userId?: string): Promise<AttendanceTicket[]> {
   const { data, error } = await query.order('created_at', { ascending: false });
   if (error) throw error;
 
-  return (data || []).map((d: any) => ({
+  let records = (data || []).map((d: any) => ({
     id: d.id,
     userId: d.user_id,
     date: d.date,
@@ -31,6 +32,12 @@ export async function getTickets(userId?: string): Promise<AttendanceTicket[]> {
     updatedAt: d.updated_at,
     user: d.user
   }));
+
+  if (currentUser && !isMainAdmin(currentUser)) {
+    records = records.filter((t: any) => !isITTeamMember(t.user) || t.userId === currentUser.uid);
+  }
+
+  return records;
 }
 
 export async function createTicket(ticket: Omit<AttendanceTicket, 'id' | 'status' | 'createdAt' | 'updatedAt' | 'user'>): Promise<void> {

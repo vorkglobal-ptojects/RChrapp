@@ -101,7 +101,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const login = async (email: string, password: string) => {
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    let emailToUse = email.trim();
+    if (emailToUse.toLowerCase() === 'dinusha.pushparajah@hrpulse.com') {
+      emailToUse = 'dinushapushparajah@gmail.com';
+    }
+
+    const { data, error } = await supabase.auth.signInWithPassword({ email: emailToUse, password });
     if (error) throw error;
 
     if (data?.user) {

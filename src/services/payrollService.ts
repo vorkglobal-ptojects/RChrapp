@@ -1,15 +1,16 @@
 import { supabase } from '../lib/supabase';
-import { PayrollRecord } from '../types';
+import { PayrollRecord, UserProfile } from '../types';
 import { getEmployees } from './userService';
+import { isMainAdmin, isITTeamMember } from '../lib/utils';
 
-export async function getPayroll(userId?: string): Promise<PayrollRecord[]> {
+export async function getPayroll(userId?: string, currentUser?: UserProfile | null): Promise<PayrollRecord[]> {
   let query = supabase.from('payroll').select('*, profiles(name, role, branch, sort_order, bank_name, bank_branch, account_no, account_holder_name)');
   if (userId) query = query.eq('user_id', userId);
   
   const { data, error } = await query;
   if (error) throw error;
 
-  const records = (data || []).map(d => ({
+  let records = (data || []).map(d => ({
     id: d.id,
     userId: d.user_id,
     userName: d.profiles?.name,
@@ -33,6 +34,25 @@ export async function getPayroll(userId?: string): Promise<PayrollRecord[]> {
     accountNo: d.profiles?.account_no,
     accountHolderName: d.profiles?.account_holder_name
   }));
+
+  // Filter IT Team payroll: visible ONLY to main admin (super) or the user themselves
+  if (currentUser) {
+    if (!isMainAdmin(currentUser)) {
+      records = records.filter(r => !isITTeamMember(r) || r.userId === currentUser.uid);
+    }
+  } else {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        const { data: caller } = await supabase.from('profiles').select('role').eq('id', session.user.id).single();
+        if (caller && !isMainAdmin(caller)) {
+          records = records.filter(r => !isITTeamMember(r) || r.userId === session.user.id);
+        }
+      }
+    } catch {
+      // fallback
+    }
+  }
 
   // Sort by sortOrder
   return records.sort((a, b) => a.sortOrder - b.sortOrder);

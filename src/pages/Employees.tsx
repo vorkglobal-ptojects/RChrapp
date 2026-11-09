@@ -36,7 +36,7 @@ export default function Employees() {
   const loadEmployees = async () => {
     setLoading(true);
     try {
-      const data = await userService.getEmployees();
+      const data = await userService.getEmployees(user);
       setEmployees(data || []);
     } catch (err) {
       console.error('Error loading employees:', err);
@@ -48,7 +48,7 @@ export default function Employees() {
 
   useEffect(() => {
     loadEmployees();
-  }, []);
+  }, [user]);
 
   const branches = ['All', ...new Set(employees.map(e => e.branch))];
 
@@ -222,14 +222,29 @@ export default function Employees() {
               {paginatedEmployees.map((emp) => (
                 <tr key={emp.uid} className="hover:bg-zinc-50/30 transition-all group">
                   <td className="px-6 py-4">
-                    <span className="text-xs font-bold text-zinc-600 bg-zinc-100 px-2 py-1 rounded-lg">{emp.branch}</span>
+                    {emp.branch === 'IT Team' ? (
+                      <span className="text-xs font-black text-indigo-700 bg-indigo-50 border border-indigo-200/80 px-2.5 py-1 rounded-lg inline-flex items-center gap-1.5 shadow-xs">
+                        <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse" />
+                        IT Team
+                      </span>
+                    ) : (
+                      <span className="text-xs font-bold text-zinc-600 bg-zinc-100 px-2 py-1 rounded-lg">{emp.branch}</span>
+                    )}
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-orange-100 flex items-center justify-center text-orange-600 font-black text-xs">
+                      <div className={cn(
+                        "w-8 h-8 rounded-lg flex items-center justify-center font-black text-xs",
+                        emp.branch === 'IT Team' ? "bg-indigo-100 text-indigo-700" : "bg-orange-100 text-orange-600"
+                      )}>
                         {emp.name.charAt(0)}
                       </div>
-                      <span className="text-sm font-black text-zinc-900">{emp.name}</span>
+                      <div>
+                        <span className="text-sm font-black text-zinc-900 block leading-tight">{emp.name}</span>
+                        {emp.department && (
+                          <span className="text-[11px] font-bold text-zinc-400 block mt-0.5">{emp.department}</span>
+                        )}
+                      </div>
                     </div>
                   </td>
                   <td className="px-6 py-4 text-xs font-medium text-zinc-500">{formatDate(emp.joinDate)}</td>

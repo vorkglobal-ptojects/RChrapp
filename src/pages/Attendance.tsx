@@ -62,9 +62,9 @@ export default function Attendance() {
     try {
       const isManagement = user.role === 'hr' || user.role === 'owner' || user.role === 'super';
       const [empData, attData, ticketData] = await Promise.all([
-        userService.getEmployees(),
-        attendanceService.getAttendance(isManagement ? undefined : user.uid),
-        attendanceTicketService.getTickets(isManagement ? undefined : user.uid)
+        userService.getEmployees(user),
+        attendanceService.getAttendance(isManagement ? undefined : user.uid, user),
+        attendanceTicketService.getTickets(isManagement ? undefined : user.uid, user)
       ]);
       setEmployees(empData);
       setRecords(attData);
