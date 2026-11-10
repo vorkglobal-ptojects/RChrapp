@@ -101,9 +101,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const login = async (email: string, password: string) => {
-    let emailToUse = email.trim();
-    if (emailToUse.toLowerCase() === 'dinusha.pushparajah@hrpulse.com') {
+    let emailToUse = email.trim().toLowerCase();
+    if (emailToUse === 'dinusha.pushparajah@hrpulse.com') {
       emailToUse = 'dinushapushparajah@gmail.com';
+    } else if (emailToUse === 'tharushi.sadumin@hrpulse.com') {
+      emailToUse = 'tharushi.sandumini@hrpulse.com';
+    } else if (emailToUse === 'w.a.chandima.dilrukishi@hrpulse.com') {
+      emailToUse = 'w.a.chandima.dilrukshi@hrpulse.com';
+    } else if (emailToUse === 'nadeesha.dihara@hrpulse.com') {
+      emailToUse = 'nadeesha.dilhara@hrpulse.com';
     }
 
     const { data, error } = await supabase.auth.signInWithPassword({ email: emailToUse, password });
