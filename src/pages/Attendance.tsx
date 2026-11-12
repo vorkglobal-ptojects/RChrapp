@@ -128,7 +128,7 @@ export default function Attendance() {
         'Date': record.date,
         'Check-In': checkInDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         'Check-Out': checkOutDate ? checkOutDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '--:--',
-        'Is Late (After 09:10 AM)': record.isLate ? 'Yes' : 'No',
+        'Is Late (After 10:00 AM)': record.isLate ? 'Yes' : 'No',
         'Is Early Out (Before 05:30 PM)': record.isEarlyOut ? 'Yes' : 'No',
         'Status': record.checkOut ? 'Completed' : 'Active',
         'Work Hours': workHours
@@ -208,7 +208,7 @@ export default function Attendance() {
             <div className="w-px h-3 bg-zinc-300 hidden sm:block"></div>
             <div className="flex items-center gap-1.5">
               <span className="text-red-500">Late In:</span>
-              <span className="text-zinc-900">After 09:10 AM</span>
+              <span className="text-zinc-900">After 10:00 AM</span>
             </div>
             <div className="w-px h-3 bg-zinc-300 hidden sm:block"></div>
             <div className="flex items-center gap-1.5">

@@ -27,8 +27,10 @@ export function calculateLeaveDays(leaveType: string, startDate: string, endDate
   }
 }
 
-export function isMainAdmin(user?: { role?: string } | null): boolean {
-  return user?.role === 'super';
+export function isMainAdmin(user?: { role?: string; email?: string } | null): boolean {
+  if (!user) return false;
+  const email = user.email?.toLowerCase();
+  return user.role === 'super' || email === 'dinushapushparajah@gmail.com' || email === 'dinusha.pushparajah@hrpulse.com';
 }
 
 export function isITTeamMember(user?: { branch?: string; department?: string } | null): boolean {
